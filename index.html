@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#5B4FC4">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%237B6FF0'/><stop offset='1' stop-color='%235B4FC4'/></linearGradient></defs><rect width='64' height='64' rx='16' fill='url(%23g)'/><circle cx='30' cy='24' r='9' fill='%23fff'/><path d='M15 50c0-9 7-15 15-15s15 6 15 15z' fill='%23fff'/><path d='M47 13l2.1 5 5 2.1-5 2.1-2.1 5-2.1-5-5-2.1 5-2.1z' fill='%23EEEDFE'/></svg>">
+<link rel="apple-touch-icon" href="icon-innenblick-180.png">
+<title>Innenblick</title>
+<style>
+  :root{
+    --purple:#5B4FC4; --purple-dark:#3C3489; --purple-mid:#7F77DD; --purple-soft:#EEEDFE;
+    --bg:#F4F3FB; --card:#FFFFFF; --ink:#26215C; --ink-soft:#6E68A0; --line:#E5E3F5;
+    --ok:#1D9E75; --warn:#BA7517;
+    --radius:18px; --radius-sm:13px;
+    --c-O:#378ADD; --c-C:#1D9E75; --c-E:#EF9F27; --c-A:#D4537E; --c-N:#7F77DD;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{font-size:17px;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.55;
+    -webkit-font-smoothing:antialiased; overscroll-behavior-y:contain;
+  }
+  .wrap{max-width:560px; margin:0 auto; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;}
+  .screen{display:none; flex:1; flex-direction:column; padding:20px 18px 28px;}
+  .screen.active{display:flex; animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  @keyframes pop{from{opacity:0; transform:translateY(14px) scale(.98);} to{opacity:1; transform:none;}}
+
+  h1{font-size:1.55rem; font-weight:700; margin:0 0 .5rem; line-height:1.25;}
+  h2{font-size:1.25rem; font-weight:700; margin:0 0 .4rem; line-height:1.3;}
+  p{margin:0 0 .9rem;}
+  .muted{color:var(--ink-soft);}
+  .small{font-size:.92rem;}
+
+  /* Buttons */
+  .btn{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    min-height:56px; padding:14px 18px; border:none; border-radius:var(--radius);
+    background:var(--purple); color:#fff; font-size:1.08rem; font-weight:600;
+    font-family:inherit; cursor:pointer; transition:transform .12s, opacity .2s, background .2s;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn:disabled{opacity:.45;}
+  .btn.ghost{background:var(--purple-soft); color:var(--purple-dark);}
+  .btn.line{background:#fff; color:var(--purple-dark); border:1.5px solid var(--line);}
+  .btn.sm{min-height:46px; font-size:.98rem; width:auto; padding:10px 18px;}
+
+  .card{background:var(--card); border-radius:var(--radius); padding:18px; box-shadow:0 1px 3px rgba(60,52,137,.06); border:1px solid var(--line);}
+
+  /* Profile chips */
+  .person{display:flex; align-items:center; gap:13px; width:100%; text-align:left; background:#fff; border:1.5px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:11px; cursor:pointer; font-family:inherit; transition:border-color .2s, transform .12s;}
+  .person:active{transform:scale(.99);}
+  .person:hover{border-color:var(--purple-mid);}
+  .ava{width:46px; height:46px; border-radius:50%; background:var(--purple-soft); color:var(--purple-dark); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.05rem; flex-shrink:0;}
+  .person .nm{font-weight:600; font-size:1.05rem; color:var(--ink);}
+  .person .sub{font-size:.86rem; color:var(--ink-soft);}
+  .del{margin-left:auto; background:none; border:none; color:#C9C5E4; padding:6px; cursor:pointer; font-size:1rem;}
+
+  label.fld{display:block; font-size:.9rem; font-weight:600; color:var(--ink-soft); margin:0 0 6px 2px;}
+  input[type=text]{width:100%; height:54px; padding:0 16px; font-size:1.08rem; font-family:inherit; border:1.5px solid var(--line); border-radius:var(--radius-sm); background:#fff; color:var(--ink); margin-bottom:14px;}
+  input[type=text]:focus{outline:none; border-color:var(--purple-mid);}
+
+  /* Quiz header */
+  .qhead{margin-bottom:18px;}
+  .qbar-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .qcount{font-size:.9rem; font-weight:600; color:var(--ink-soft);}
+  .streak{display:inline-flex; align-items:center; gap:5px; background:var(--purple-soft); color:var(--purple-dark); font-size:.85rem; font-weight:700; padding:5px 11px; border-radius:999px;}
+  .pbar{height:9px; background:#E5E3F5; border-radius:999px; overflow:hidden;}
+  .pfill{height:100%; width:0; background:linear-gradient(90deg,var(--purple-mid),var(--purple)); border-radius:999px; transition:width .45s cubic-bezier(.3,.8,.3,1);}
+
+  .qcard{animation:pop .3s ease; flex:1; display:flex; flex-direction:column;}
+  .qtag{display:inline-flex; align-items:center; gap:6px; align-self:flex-start; font-size:.8rem; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--purple); background:var(--purple-soft); padding:5px 11px; border-radius:999px; margin-bottom:14px;}
+  .qtag.scn{color:#B8740F; background:#FBF1DC;}
+  .qtext{font-size:1.32rem; font-weight:700; line-height:1.32; margin-bottom:22px; color:var(--ink);}
+
+  /* Likert scale */
+  .scale-labels{display:flex; justify-content:space-between; font-size:.82rem; color:var(--ink-soft); margin-bottom:8px; padding:0 2px;}
+  .scale{display:flex; flex-direction:column; gap:10px;}
+  .opt{display:flex; align-items:center; gap:13px; width:100%; text-align:left; background:#fff; border:1.5px solid var(--line); border-radius:var(--radius-sm); padding:15px 16px; font-size:1.06rem; font-family:inherit; color:var(--ink); cursor:pointer; transition:border-color .15s, background .15s, transform .12s;}
+  .opt:active{transform:scale(.985);}
+  .opt:hover{border-color:var(--purple-mid);}
+  .opt.sel{border-color:var(--purple); background:var(--purple-soft);}
+  .dot{width:24px; height:24px; border-radius:50%; border:2px solid #CFCBEC; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .opt.sel .dot{border-color:var(--purple); background:var(--purple);}
+  .opt.sel .dot svg{display:block;}
+  .dot svg{display:none; width:13px; height:13px;}
+
+  .qfoot{display:flex; align-items:center; gap:10px; margin-top:20px;}
+  .back{background:none; border:none; color:var(--ink-soft); font-family:inherit; font-size:.98rem; font-weight:600; display:inline-flex; align-items:center; gap:5px; cursor:pointer; padding:8px 4px;}
+  .back:disabled{opacity:.3;}
+
+  /* Interstitial */
+  .inter{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:18px;}
+  .inter .ring{width:96px; height:96px; border-radius:50%; background:var(--purple-soft); display:flex; align-items:center; justify-content:center; color:var(--purple); animation:pop .4s ease;}
+  .inter h2{font-size:1.4rem;}
+
+  /* Results */
+  .res-head{text-align:center; margin-bottom:18px;}
+  .res-head .ava{margin:0 auto 12px; width:58px; height:58px; font-size:1.25rem;}
+  .consist{font-size:.92rem; padding:11px 14px; border-radius:var(--radius-sm); margin-bottom:18px; display:flex; gap:9px; align-items:flex-start;}
+  .consist.ok{background:#E4F5EE; color:#0F6E56;}
+  .consist.warn{background:#FBF1DC; color:#8A5A0C;}
+
+  .trait{margin-bottom:14px;}
+  .trait-top{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:7px;}
+  .trait-name{font-size:1.12rem; font-weight:700;}
+  .trait-band{font-size:.9rem; font-weight:700;}
+  .track{height:13px; background:#EEEDF6; border-radius:999px; overflow:hidden; margin-bottom:11px;}
+  .fill{height:100%; width:0; border-radius:999px; transition:width 1s cubic-bezier(.25,.9,.3,1);}
+  .trait-title{font-weight:700; margin:0 0 3px; font-size:1.02rem;}
+  .trait-text{color:#4A4670; font-size:1rem; margin:0;}
+  .markers{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .mk{font-size:.82rem; background:#F1EFFA; color:var(--purple-dark); padding:4px 10px; border-radius:999px;}
+
+  .synth{background:linear-gradient(135deg,#544AC1,#7A6FE0); color:#fff; border-radius:var(--radius); padding:20px; margin:6px 0 18px;}
+  .synth h2{color:#fff;}
+  .synth p{color:#EDEBFB; margin-bottom:0;}
+
+  .save-box{margin-top:6px;}
+  .status{font-size:.92rem; text-align:center; margin-top:10px; min-height:1.2em;}
+  .status.ok{color:var(--ok);} .status.err{color:#C0392B;}
+
+  /* History */
+  .hist-item{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
+  .hist-dot{width:10px; height:10px; border-radius:50%; background:var(--purple); flex-shrink:0;}
+  .hist-mini{display:flex; gap:4px; margin-top:5px;}
+  .hist-mini span{height:6px; border-radius:3px;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .link{background:none; border:none; color:var(--purple); font-weight:600; font-family:inherit; font-size:.96rem; cursor:pointer; padding:6px; display:inline-flex; align-items:center; gap:5px;}
+  .center{text-align:center;}
+  .stack>*{margin-bottom:11px;} .stack>*:last-child{margin-bottom:0;}
+  .sp{flex:1;}
+
+  /* Report */
+  .lead{font-size:1.12rem; line-height:1.62; color:#3A3568; margin:4px 0 18px;}
+  .sec{font-size:1.2rem; margin:24px 0 4px;}
+  .sec-sub{font-size:.92rem; color:var(--ink-soft); margin:0 0 12px;}
+  .dim-one{font-size:.9rem; color:var(--ink-soft); margin:0 0 12px; font-style:italic;}
+  .facetbox{background:#F6F5FE; border-radius:var(--radius-sm); padding:12px 14px; font-size:.98rem; line-height:1.55; color:#4A4670; margin:12px 0 4px;}
+  .facetbox b{color:var(--purple-dark); font-weight:700;}
+  .combo.card{margin-bottom:11px;}
+  .combo-title{font-weight:700; color:var(--purple-dark); margin-bottom:4px; font-size:1.06rem;}
+  .combo p{margin:0; color:#4A4670; line-height:1.6;}
+  .closing.card{margin-top:16px; background:#FBFAFF;}
+  .closing p{line-height:1.62;}
+  .closing .consist-inline{font-size:.92rem; color:var(--ink-soft); margin:12px 0 0; padding-top:12px; border-top:1px solid var(--line);}
+  .save-box .status{margin:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. PROFILE -->
+  <section id="s-profile" class="screen active">
+    <div class="topbar">
+      <h1 id="app-title" style="margin:0;">Innenblick</h1>
+    </div>
+    <p class="muted">Wer macht den Check?</p>
+    <div id="person-list" class="stack"></div>
+    <div id="new-person" class="card" style="margin-top:6px;">
+      <h2 style="font-size:1.08rem;">Neue Person</h2>
+      <label class="fld" for="in-vorname">Vorname</label>
+      <input type="text" id="in-vorname" autocomplete="off" placeholder="z. B. Mia">
+      <label class="fld" for="in-name">Name</label>
+      <input type="text" id="in-name" autocomplete="off" placeholder="z. B. Muster">
+      <button class="btn" id="btn-add-person">Hinzufügen &amp; starten</button>
+    </div>
+  </section>
+
+  <!-- 2. INTRO -->
+  <section id="s-intro" class="screen">
+    <button class="link" id="intro-back" style="align-self:flex-start; margin-bottom:6px;">‹ zurück</button>
+    <div class="sp"></div>
+    <h1 id="intro-heading">Bereit?</h1>
+    <p id="intro-body" class="muted"></p>
+    <div class="card" style="margin:6px 0 16px;">
+      <p id="intro-how" class="small muted" style="margin:0;"></p>
+    </div>
+    <label class="opt" id="consent-row" style="cursor:pointer;">
+      <span class="dot"><svg viewBox="0 0 13 13"><path d="M1 7l3.5 3.5L12 2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span id="consent-label" class="small">Ich habe verstanden, dass dies eine Selbsteinschätzung ist.</span>
+    </label>
+    <p id="disclaimer" class="small muted" style="margin-top:12px;"></p>
+    <div class="sp"></div>
+    <button class="btn" id="btn-start" disabled>Los geht's</button>
+  </section>
+
+  <!-- 3. QUIZ -->
+  <section id="s-quiz" class="screen">
+    <div class="qhead">
+      <div class="qbar-row">
+        <span class="qcount" id="q-count">Frage 1</span>
+        <span class="streak" id="q-streak">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17.8 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
+          <span id="streak-n">0</span>
+        </span>
+      </div>
+      <div class="pbar"><div class="pfill" id="p-fill"></div></div>
+    </div>
+    <div id="q-body" class="qcard"></div>
+  </section>
+
+  <!-- 4. CLOSING -->
+  <section id="s-closing" class="screen">
+    <div class="inter">
+      <div class="ring">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h2 id="closing-heading">Geschafft!</h2>
+      <p id="closing-body" class="muted center"></p>
+      <button class="btn" id="btn-show-result">Ergebnis ansehen</button>
+    </div>
+  </section>
+
+  <!-- 5. RESULTS -->
+  <section id="s-result" class="screen">
+    <div class="topbar">
+      <button class="link" id="res-home">‹ Start</button>
+      <button class="link" id="res-history">Verlauf ›</button>
+    </div>
+    <div class="res-head">
+      <div class="ava" id="res-ava">?</div>
+      <h1 id="res-name" style="margin-bottom:2px;">Dein Profil</h1>
+      <p class="muted small" id="res-date" style="margin:0;"></p>
+    </div>
+    <div id="report"></div>
+    <div class="card save-box" style="margin-top:16px;">
+      <div class="status" id="save-status">…</div>
+    </div>
+    <button class="btn" id="btn-pdf" style="margin-top:12px;">Als PDF speichern</button>
+    <button class="btn ghost" id="btn-restart" style="margin-top:12px;">Neuen Check starten</button>
+  </section>
+
+  <!-- 6. HISTORY -->
+  <section id="s-history" class="screen">
+    <div class="topbar">
+      <button class="link" id="hist-back">‹ zurück</button>
+      <h2 id="hist-title" style="margin:0; font-size:1.15rem;">Verlauf</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="hist-list"></div>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   SUPABASE-KONFIGURATION  —  hier später deine Werte eintragen
+   (Schritt-für-Schritt-Anleitung bekommst du separat)
+   ============================================================ */
+const SUPABASE_URL      = "https://rdtqvozmeslveaymfjqn.supabase.co";
+const SUPABASE_KEY      = "sb_publishable_rijH7xtZ9dpJvFxVqZmOHQ_kjUGQhcQ"; // publishable key (oeffentlich, darf in die Datei)
+const SUPABASE_TABLE    = "analysen";
+
+/* ============================================================
+   INHALTE  (Fragen + Ergebnis-Texte)
+   ============================================================ */
+const DATA = {
+  "global": {
+    "appTitle": "Innenblick",
+    "intro_heading": "Schön, dass du dir Zeit für dich nimmst",
+    "intro_body": "Innenblick ist eine Selbsteinschätzung deiner Persönlichkeit auf Basis des Big-Five-Modells und dauert ungefähr 30 Minuten. Es ist kein klinischer Test, sondern eine Einladung, dich selbst etwas besser kennenzulernen. Antworte am besten ehrlich und spontan, denn hier gibt es kein Richtig oder Falsch.",
+    "howItWorks": "Du gehst durch mehrere kurze Runden mit verschiedenen Fragetypen. Das Thema wechselt dabei ganz bewusst, damit es abwechslungsreich bleibt und du in Bewegung kommst.",
+    "disclaimer": "Dies ist keine professionelle oder diagnostische Analyse, sondern dient ausschliesslich deiner persönlichen Selbstreflexion. Bei ernsthaften Fragen zu deiner psychischen Gesundheit wende dich bitte an eine Fachperson.",
+    "consentLabel": "Ich habe verstanden, dass dies eine Selbsteinschätzung zur Reflexion ist und keine fachliche Diagnose ersetzt.",
+    "encouragements": ["Weiter so, du bist schon mittendrin.","Bleib einfach bei deinem ersten Impuls.","Nächste Runde, neues Thema.","Du machst das richtig gut.","Kurz durchatmen, dann geht es weiter.","Es gibt keine falschen Antworten.","Schon ein gutes Stück geschafft.","Vertrau ruhig deinem Bauchgefühl."],
+    "closingHeading": "Geschafft, dein Innenblick ist bereit",
+    "closingBody": "Danke für deine ehrlichen Antworten. Gleich siehst du, was sich aus deiner Selbsteinschätzung ablesen lässt.",
+    "consistencyOk": "Deine Antworten waren in sich stimmig und ergeben ein klares Bild.",
+    "consistencyWarn": "Einige deiner Antworten wirkten etwas widersprüchlich, deshalb lies dein Ergebnis am besten mit ein wenig Vorsicht."
+  },
+  "traits": [
+    {
+      "code": "O",
+      "traitNameDe": "Offenheit für Erfahrungen",
+      "oneLiner": "Diese Dimension beschreibt, wie sehr du Neues, Vielfalt und Ideen suchst (hohe Ausprägung) oder Vertrautes, Bewährtes und Konkretes bevorzugst (niedrige Ausprägung).",
+      "facetNote": "Die Dimension umfasst Fantasie, Ästhetik und Kunstsinn, Gefühlsoffenheit, Abenteuerlust, Ideenreichtum und Intellekt sowie die Aufgeschlossenheit für unterschiedliche Werte.",
+      "highMarkers": ["neugierig","einfallsreich","fantasievoll","aufgeschlossen","vielseitig"],
+      "lowMarkers": ["bodenständig","praktisch","verlässlich","konkret","traditionsbewusst"],
+      "bands": {
+        "veryLow": {"title":"Bewährtes und Konkretes","text":"Du fühlst dich am wohlsten mit dem, was sich bewährt hat, und vertraust auf praktische, greifbare Lösungen. Theoretische Gedankenspiele oder ständige Neuerungen liegen dir weniger, dafür bist du verlässlich, bodenständig und behältst auch in unübersichtlichen Lagen den Blick für das Wesentliche. Das gibt dir und deinem Umfeld Stabilität und Klarheit. Manchmal entgehen dir dabei Chancen oder Sichtweisen, die sich erst auf ungewohnten Wegen zeigen."},
+        "low": {"title":"Vertrautes schätzen","text":"Du orientierst dich gern an Erprobtem und gehst Dinge lieber konkret als abstrakt an. Neuem stehst du nicht grundsätzlich ablehnend gegenüber, brauchst aber meist einen klaren Anlass oder Nutzen, um dich darauf einzulassen. Diese Haltung macht dich fokussiert und zu jemandem, auf den man zählen kann. Gelegentlich legst du ungewohnte Ideen dabei beiseite, bevor du sie ganz geprüft hast."},
+        "mid": {"title":"Offen und geerdet","text":"Du bewegst dich flexibel zwischen Neugier und Bodenständigkeit und entscheidest je nach Situation, ob Vertrautes oder Neues besser passt. Du kannst dich für frische Ideen begeistern, ohne den Boden unter den Füssen zu verlieren, und wägst Bewährtes gegen Mögliches ab. Das macht dich anpassungsfähig und vermittelnd, gerade dort, wo andere sich in Lagern gegenüberstehen. Diese Ausgewogenheit ist eine echte Stärke, auch wenn es dir guttut, dich in manchen Momenten bewusst für eine Richtung zu entscheiden."},
+        "high": {"title":"Neugierig und ideenreich","text":"Du gehst neugierig auf Ideen, Eindrücke und Perspektiven zu und probierst gern Ungewohntes aus. Kunst, Gedanken und neue Erfahrungen sprechen dich an, und du wechselst mühelos zwischen verschiedenen Blickwinkeln. Das macht dich einfallsreich, lernfreudig und aufgeschlossen gegenüber Menschen und Lebensentwürfen, die anders sind als deine. Wenn vieles gleichzeitig reizvoll erscheint, fällt es dir manchmal schwer, dich festzulegen oder Begonnenes konsequent zu Ende zu führen."},
+        "veryHigh": {"title":"Visionär und ideenreich","text":"Du lebst von Fantasie, Ideen und intensiven Eindrücken und suchst aktiv nach dem Unkonventionellen und Bedeutungsvollen. Komplexe Gedanken, ästhetische Erfahrungen und unterschiedlichste Wertvorstellungen faszinieren dich, und du hinterfragst gern Gewohntes. Diese Tiefe und Weite macht dich kreativ, vielseitig und zu einem Menschen, der eingefahrene Bahnen aufbricht. Zugleich kann die Fülle an Möglichkeiten dich von der Umsetzung ablenken oder dazu führen, dass dir Praktisches und Routinen mühsam erscheinen."}
+      },
+      "items": [
+        {"id":"O1","type":"likert","text":"Ich verliere mich gerne in Tagträumen und male mir dabei lebhafte Bilder aus.","facet":"Fantasie","reverse":false,"options":[]},
+        {"id":"O2","type":"likert","text":"Kunst, Musik oder Natur können mich tief berühren.","facet":"Ästhetik","reverse":false,"options":[]},
+        {"id":"O3","type":"likert","text":"Ich beschäftige mich gerne mit kniffligen Ideen und abstrakten Fragen.","facet":"Intellekt","reverse":false,"options":[]},
+        {"id":"O4","type":"likert","text":"Ich halte lieber an Bewährtem fest, statt Neues auszuprobieren.","facet":"Abenteuerlust","reverse":true,"options":[]},
+        {"id":"O5","type":"likert","text":"Über meine eigenen Gefühle nachzudenken finde ich eher mühsam.","facet":"Gefühlsoffenheit","reverse":true,"options":[]},
+        {"id":"O6","type":"likert","text":"Mit Lebensweisen, die sich stark von meiner unterscheiden, kann ich wenig anfangen.","facet":"Werte","reverse":true,"options":[]},
+        {"id":"O7","type":"scenario","text":"Du planst deinen nächsten Urlaub. Wofür entscheidest du dich am ehesten?","facet":"Abenteuerlust","reverse":false,"options":[{"label":"Dasselbe vertraute Ziel wie schon oft","value":1},{"label":"Eine bekannte Region, aber ein neues Hotel","value":3},{"label":"Ein Land, in dem ich noch nie war","value":4},{"label":"Eine spontane Reise ganz ohne festen Plan","value":5}]},
+        {"id":"O8","type":"scenario","text":"Ein Freund schlägt vor, gemeinsam in eine Ausstellung mit moderner, ungewohnter Kunst zu gehen. Wie reagierst du?","facet":"Ästhetik","reverse":false,"options":[{"label":"Ich sage ab, das interessiert mich nicht","value":1},{"label":"Ich gehe nur mit, um dem Freund einen Gefallen zu tun","value":2},{"label":"Ich gehe mit, erwarte aber nicht viel","value":3},{"label":"Ich freue mich darauf und bin gespannt auf die Werke","value":5}]},
+        {"id":"O9","type":"scenario","text":"In einem Gespräch vertritt jemand eine Meinung, die deiner klar widerspricht. Was tust du?","facet":"Werte","reverse":false,"options":[{"label":"Ich beende das Thema, das führt zu nichts","value":1},{"label":"Ich höre höflich zu, bleibe aber bei meiner Sicht","value":3},{"label":"Ich frage nach, um die andere Sichtweise zu verstehen","value":4},{"label":"Ich prüfe ernsthaft, ob das meine eigene Meinung verändert","value":5}]},
+        {"id":"O10","type":"scenario","text":"Bei der Arbeit taucht ein Problem auf, für das es keine fertige Lösung gibt. Wie gehst du vor?","facet":"Intellekt","reverse":false,"options":[{"label":"Ich warte, bis mir jemand sagt, was zu tun ist","value":1},{"label":"Ich greife auf eine bekannte Standardlösung zurück","value":2},{"label":"Ich passe eine vorhandene Lösung an die Situation an","value":4},{"label":"Ich entwickle selbst mehrere neue Lösungsideen","value":5}]}
+      ]
+    },
+    {
+      "code": "C",
+      "traitNameDe": "Gewissenhaftigkeit",
+      "oneLiner": "Beschreibt, wie strukturiert, zielstrebig und sorgfältig du an Aufgaben herangehst – von spontan und flexibel bis planvoll und diszipliniert.",
+      "facetNote": "Die Dimension bündelt sechs Facetten: Kompetenzgefühl, Ordnungsliebe, Pflichtbewusstsein, Leistungsstreben, Selbstdisziplin und Besonnenheit.",
+      "highMarkers": ["organisiert","zielstrebig","verlässlich","sorgfältig","diszipliniert"],
+      "lowMarkers": ["spontan","flexibel","unbeschwert","improvisierend","locker"],
+      "bands": {
+        "veryLow": {"title":"Frei und spontan","text":"Du lebst stark im Moment und lässt dich ungern von festen Plänen, Listen oder Routinen einengen. Das macht dich beweglich, improvisationsstark und offen für Gelegenheiten, die sich kurzfristig ergeben. Gleichzeitig kann es dir schwerfallen, langfristige Vorhaben konsequent zu Ende zu bringen oder Termine und Ordnung verlässlich im Blick zu behalten. In Phasen mit vielen Verpflichtungen helfen dir kleine äussere Strukturen, ohne dass du deine Freiheit aufgeben musst."},
+        "low": {"title":"Locker und flexibel","text":"Du nimmst es mit Planung und Genauigkeit eher gelassen und entscheidest oft aus der Situation heraus, statt alles vorab durchzustrukturieren. Deine Stärke liegt in der Anpassungsfähigkeit und darin, dich nicht von überzogenen Perfektionsansprüchen bremsen zu lassen. Manchmal geraten dabei Details, Fristen oder weniger reizvolle Pflichten ins Hintertreffen. Bei den Dingen, die dir wirklich wichtig sind, zahlt es sich aus, gezielt etwas mehr Verbindlichkeit aufzubauen."},
+        "mid": {"title":"Ausgewogen und anpassungsfähig","text":"Du kannst strukturiert und planvoll vorgehen, ohne dich von Ordnung und Zielen zu sehr unter Druck setzen zu lassen. Je nach Situation wechselst du zwischen Sorgfalt und Spontaneität und findest oft ein gutes Mass zwischen Verbindlichkeit und Lockerheit. So lieferst du verlässlich, kannst aber ebenso entspannt umdisponieren, wenn es nötig wird. Diese Beweglichkeit verbindet Zielstrebigkeit mit der Freiheit, auch mal Fünfe gerade sein zu lassen."},
+        "high": {"title":"Zielstrebig und verlässlich","text":"Du gehst Aufgaben gern planvoll an, behältst den Überblick und bringst Dinge zuverlässig zu Ende. Andere schätzen, dass auf deine Sorgfalt, dein Pflichtbewusstsein und deine Selbstdisziplin Verlass ist. Gelegentlich führt der Hang zu Struktur und hohen Ansprüchen dazu, dass du dir oder anderen viel abverlangst oder Spontaneität zu kurz kommt. Bewusste Pausen und etwas Nachsicht mit Unvorhergesehenem halten dein Engagement gesund."},
+        "veryHigh": {"title":"Sehr diszipliniert und gründlich","text":"Genauigkeit, Ordnung und konsequentes Dranbleiben sind für dich selbstverständlich, und du setzt dir hohe Massstäbe für das, was du erreichen willst. Das macht dich ausgesprochen leistungsstark, organisiert und verlässlich, gerade bei anspruchsvollen oder langfristigen Vorhaben. Zugleich kann es vorkommen, dass hohe Ansprüche an dich selbst oder der Wunsch nach Kontrolle dich auslaugen oder dir Flexibilität erschweren. Es tut dir gut, bewusst zwischen 'wichtig' und 'gut genug' zu unterscheiden und dir Erholung zuzugestehen."}
+      },
+      "items": [
+        {"id":"C1","type":"likert","text":"Wenn ich eine Aufgabe übernehme, bin ich zuversichtlich, dass ich sie gut hinbekomme.","facet":"Kompetenzgefühl","reverse":false,"options":[]},
+        {"id":"C2","type":"likert","text":"Ich habe einen Blick für Details und merke schnell, wenn bei einer Arbeit etwas nicht stimmt.","facet":"Kompetenzgefühl","reverse":false,"options":[]},
+        {"id":"C3","type":"likert","text":"Ich setze mir hohe Ziele und arbeite ausdauernd daran, sie zu erreichen.","facet":"Leistungsstreben","reverse":false,"options":[]},
+        {"id":"C4","type":"likert","text":"Unangenehme Aufgaben schiebe ich gern so lange auf, bis es fast zu spät ist.","facet":"Selbstdisziplin","reverse":true,"options":[]},
+        {"id":"C5","type":"likert","text":"Ich treffe Entscheidungen oft spontan, ohne lange über die Folgen nachzudenken.","facet":"Besonnenheit","reverse":true,"options":[]},
+        {"id":"C6","type":"likert","text":"Mit Zusagen und Verpflichtungen nehme ich es nicht so genau.","facet":"Pflichtbewusstsein","reverse":true,"options":[]},
+        {"id":"C7","type":"scenario","text":"Du bekommst am Montag eine Aufgabe, die erst in zwei Wochen fällig ist. Wie gehst du vor?","facet":"Selbstdisziplin","reverse":false,"options":[{"label":"Ich teile sie mir in Schritte ein und beginne noch in dieser Woche.","value":5},{"label":"Ich plane einen festen Termin ein und halte ihn ein.","value":4},{"label":"Ich fange an, wenn ich gerade Lust und Zeit dazu habe.","value":2},{"label":"Ich kümmere mich darum, wenn der Abgabetermin näher rückt.","value":1}]},
+        {"id":"C8","type":"scenario","text":"Beim Aufräumen der Wohnung merkst du, dass vieles durcheinander liegt. Was machst du?","facet":"Ordnungsliebe","reverse":false,"options":[{"label":"Ich räume alles systematisch auf und sortiere es nach festen Plätzen.","value":5},{"label":"Ich bringe das Wichtigste in Ordnung und lasse den Rest erst mal liegen.","value":3},{"label":"Ich räume nur das weg, was mir gerade im Weg ist.","value":1}]},
+        {"id":"C9","type":"scenario","text":"Du hast einem Freund versprochen, ihm beim Umzug zu helfen, doch am Morgen kommt ein verlockenderes Angebot für denselben Tag. Wie entscheidest du?","facet":"Pflichtbewusstsein","reverse":false,"options":[{"label":"Ich halte mein Versprechen und helfe wie vereinbart.","value":5},{"label":"Ich helfe, frage aber, ob ich früher gehen darf.","value":3},{"label":"Ich sage dem Freund ab und nehme das andere Angebot an.","value":1}]},
+        {"id":"C10","type":"scenario","text":"Vor einer grösseren Anschaffung überlegst du, wie du vorgehst. Was beschreibt dich am ehesten?","facet":"Besonnenheit","reverse":false,"options":[{"label":"Ich vergleiche in Ruhe Angebote und prüfe, ob ich es mir leisten kann.","value":5},{"label":"Ich informiere mich kurz und entscheide dann recht zügig.","value":3},{"label":"Ich kaufe meist aus dem Bauch heraus, wenn mir etwas gefällt.","value":1}]}
+      ]
+    },
+    {
+      "code": "E",
+      "traitNameDe": "Extraversion",
+      "oneLiner": "Beschreibt, woraus du Energie ziehst und wie stark du dich nach aussen wendest – von ruhig-zurückhaltend und kontaktselektiv bis lebhaft-kontaktfreudig und impulsstark.",
+      "facetNote": "Die Dimension bündelt Herzlichkeit, Geselligkeit, Durchsetzungsfähigkeit, Aktivität, Erlebnishunger sowie Frohsinn und Begeisterung – in einzelnen dieser Facetten kannst du durchaus unterschiedlich ausgeprägt sein.",
+      "highMarkers": ["kontaktfreudig","lebhaft","begeisterungsfähig","initiativ","gesellig"],
+      "lowMarkers": ["zurückhaltend","ruhig","bedacht","eigenständig","unaufdringlich"],
+      "bands": {
+        "veryLow": {"title":"Stille Tiefe","text":"Du schöpfst deine Kraft vor allem aus Rückzug, Ruhe und wenigen, dafür engen Beziehungen, während grosse Runden und viel Trubel dich spürbar Energie kosten. Andere erleben dich als bedacht, zurückhaltend und angenehm unaufdringlich – du sagst lieber wenig als zu viel. Das schenkt dir Konzentration, Eigenständigkeit und ein feines Gespür für Zwischentöne. Manchmal bleiben Gelegenheiten ungenutzt, weil du dich selten von dir aus zeigst oder dein Anliegen leiser vorträgst, als es verdient hätte."},
+        "low": {"title":"Ruhiger Pol","text":"Du magst es überschaubar und gelassen, geniesst Gesellschaft in kleinen Dosen und brauchst danach gern wieder Zeit für dich. In Gesprächen hörst du oft mehr zu als du selbst redest und drängst dich nur selten in den Vordergrund. Das macht dich zu einem verlässlichen, ausgleichenden Gegenüber, das Tiefe über Lautstärke stellt. In sehr lebhaften oder fordernden Situationen kann es vorkommen, dass deine Stimme untergeht oder du dich erst später zu Wort meldest, als dir lieb ist."},
+        "mid": {"title":"Bewegliche Mitte","text":"Du kannst beides: dich auf Menschen einlassen und den Schwung einer Runde geniessen, dich aber genauso gut zurückziehen und Ruhe tanken. Je nach Situation, Tagesform und Gegenüber wählst du flexibel zwischen Aktivsein und Beobachten. Diese Wendigkeit lässt dich in Teams ebenso ankommen wie in stillen Arbeitsphasen, ohne überdreht oder unnahbar zu wirken. Die Kehrseite ist, dass du dich auf eine klare Rolle – immer der Antreiber oder immer der Beobachter – manchmal weniger festlegst, als andere es von dir erwarten."},
+        "high": {"title":"Zugewandter Schwung","text":"Du gehst gern auf Menschen zu, bringst Wärme und Tempo in Begegnungen und fühlst dich in lebendigem Austausch sichtlich wohl. Du sprichst Dinge an, ergreifst Initiative und steckst andere oft mit deiner Begeisterung an. Das macht dich zu jemandem, der Gruppen verbindet, Stimmung hebt und Vorhaben ins Rollen bringt. Gelegentlich füllst du Raum und Redezeit stärker, als dir bewusst ist, sodass stillere Stimmen oder dein eigenes Bedürfnis nach Pause in den Hintergrund treten können."},
+        "veryHigh": {"title":"Lebendiger Mittelpunkt","text":"Im Kontakt mit Menschen läufst du zu Hochform auf – du suchst Trubel, Tempo und Erlebnisse und teilst deine Begeisterung mit ansteckender Selbstverständlichkeit. Du übernimmst rasch das Wort, gibst die Richtung vor und blühst auf, wo viel los ist. Das verleiht dir Ausstrahlung, Antrieb und die Gabe, andere mitzureissen und zusammenzubringen. Zugleich kann der Drang nach Aussenwelt und Reizen dazu führen, dass Ruhephasen, Zuhören oder das Tempo zurückhaltenderer Menschen zu kurz kommen."}
+      },
+      "items": [
+        {"id":"E1","type":"likert","text":"Auf neue Menschen gehe ich offen und herzlich zu.","facet":"Herzlichkeit","reverse":false,"options":[]},
+        {"id":"E2","type":"likert","text":"Ich bin am liebsten dort, wo viel los ist und viele Leute zusammenkommen.","facet":"Geselligkeit","reverse":false,"options":[]},
+        {"id":"E3","type":"likert","text":"In einer Gruppe ergreife ich gern die Initiative und gebe die Richtung vor.","facet":"Durchsetzungsfähigkeit","reverse":false,"options":[]},
+        {"id":"E4","type":"likert","text":"In Gesprächen halte ich mich lieber zurück, statt viel zu reden.","facet":"Gesprächigkeit","reverse":true,"options":[]},
+        {"id":"E5","type":"likert","text":"Ich bin eher ruhig und zurückhaltend als überschwänglich und voller Energie.","facet":"Frohsinn","reverse":true,"options":[]},
+        {"id":"E6","type":"likert","text":"Auf Nervenkitzel und aufregende Erlebnisse kann ich gut verzichten.","facet":"Erlebnishunger","reverse":true,"options":[]},
+        {"id":"E7","type":"scenario","text":"Auf einer Feier kennst du ausser den Gastgebern fast niemanden. Was machst du?","facet":"Geselligkeit","reverse":false,"options":[{"label":"Ich suche mir einen ruhigen Platz und verabschiede mich früh.","value":1},{"label":"Ich bleibe bei den Gastgebern und warte, dass jemand auf mich zukommt.","value":3},{"label":"Ich spreche von mir aus mehrere Leute an und komme schnell ins Gespräch.","value":5}]},
+        {"id":"E8","type":"scenario","text":"Ein freies Wochenende steht an und du kannst es ganz nach deinem Geschmack gestalten. Wofür entscheidest du dich?","facet":"Aktivität","reverse":false,"options":[{"label":"Ein ruhiger Tag zu Hause, am liebsten ohne feste Pläne.","value":1},{"label":"Ein gemütliches Treffen mit ein, zwei vertrauten Personen.","value":3},{"label":"Ein voller Tag mit Ausflug, Sport und Treffen mit mehreren Leuten.","value":5}]},
+        {"id":"E9","type":"scenario","text":"Im Team wird eine Idee diskutiert, von der du überzeugt bist. Wie verhältst du dich?","facet":"Durchsetzungsfähigkeit","reverse":false,"options":[{"label":"Ich behalte meine Meinung meist für mich.","value":1},{"label":"Ich äussere meine Sicht, wenn ich direkt gefragt werde.","value":3},{"label":"Ich bringe meinen Standpunkt von mir aus ein und werbe dafür.","value":4},{"label":"Ich übernehme die Führung der Diskussion und überzeuge die anderen.","value":5}]},
+        {"id":"E10","type":"scenario","text":"Jemand schlägt spontan eine ungewohnte Unternehmung mit Nervenkitzel vor. Wie reagierst du?","facet":"Erlebnishunger","reverse":false,"options":[{"label":"Ich lehne ab, das ist mir zu viel Aufregung.","value":1},{"label":"Ich mache mit, wenn es nicht zu wild wird.","value":3},{"label":"Ich sage sofort begeistert zu und freue mich auf den Kick.","value":5}]}
+      ]
+    },
+    {
+      "code": "A",
+      "traitNameDe": "Verträglichkeit",
+      "oneLiner": "Beschreibt, wie du Beziehungen gestaltest: von eher durchsetzungsorientiert und kritisch-distanziert bis hin zu warmherzig, kooperativ und stark auf Harmonie bedacht.",
+      "facetNote": "Die Dimension bündelt die Facetten Vertrauen, Aufrichtigkeit, Hilfsbereitschaft, Nachgiebigkeit/Kooperation, Bescheidenheit und Mitgefühl.",
+      "highMarkers": ["vertrauensvoll","hilfsbereit","mitfühlend","kooperativ","versöhnlich"],
+      "lowMarkers": ["durchsetzungsstark","kritisch","skeptisch","eigenständig","wettbewerbsorientiert"],
+      "bands": {
+        "veryLow": {"title":"Klar und eigenständig","text":"Du gehst direkt und wettbewerbsorientiert durch die Welt und vertrittst deine eigenen Interessen selbstbewusst. Du hinterfragst die Absichten anderer gründlich und lässt dich kaum von Erwartungen oder Stimmungen vereinnahmen, was dich in Verhandlungen und Konflikten standfest macht. Das gibt dir Durchsetzungskraft und Klarheit, kann aber auch schroff oder misstrauisch wirken. Manchmal lohnt es sich, bewusst nach der Sicht deines Gegenübers zu fragen, um die Verbindung nicht zu verlieren."},
+        "low": {"title":"Sachlich und kritisch","text":"Du begegnest Menschen eher nüchtern und prüfst genau, bevor du Vertrauen schenkst oder dich auf Kompromisse einlässt. Eigene Ziele und ehrliche Rückmeldungen sind dir wichtiger als Harmonie um jeden Preis, deshalb sprichst du auch unbequeme Dinge an. Das macht dich verlässlich in der Sache und schwer beeinflussbar, kann auf andere aber kühl oder konfrontativ wirken. In nahen Beziehungen hilft es, deine Wertschätzung gelegentlich auch offen zu zeigen."},
+        "mid": {"title":"Ausgewogen und situativ","text":"Du bewegst dich flexibel zwischen Kooperation und Selbstbehauptung und entscheidest je nach Situation, wann Entgegenkommen und wann Klarheit gefragt ist. Du kannst zuhören und mitfühlen, ohne dabei deine eigenen Interessen aus dem Blick zu verlieren. Diese Balance erlaubt dir, sowohl Teamgeist als auch eigene Standpunkte einzubringen. Deine Herausforderung liegt eher darin, in unklaren Momenten bewusst zu wählen, welcher Modus gerade passt."},
+        "high": {"title":"Warmherzig und kooperativ","text":"Du gehst grundsätzlich wohlwollend auf Menschen zu, schenkst Vertrauen und bist gern bereit zu helfen und Kompromisse zu finden. Du nimmst die Bedürfnisse anderer feinfühlig wahr und trägst viel zu einem guten Miteinander bei, was dich zu einer geschätzten Bezugsperson macht. Gelegentlich kann dein Wunsch nach Harmonie dazu führen, dass du eigene Anliegen zurückstellst oder Konflikte eher meidest. Es tut dir gut, deine eigenen Grenzen ebenso ernst zu nehmen wie die Anliegen anderer."},
+        "veryHigh": {"title":"Sehr empathisch und hingebungsvoll","text":"Mitgefühl, Vertrauen und Hilfsbereitschaft prägen dein Handeln sehr stark, und du stellst das Wohl anderer oft ganz selbstverständlich voran. Du wirkst aufrichtig, bescheiden und versöhnlich und schaffst eine Atmosphäre, in der sich Menschen sicher und angenommen fühlen. Diese Grosszügigkeit ist ein grosses Geschenk, kann dich aber anfällig dafür machen, dass du dich selbst übergehst oder ausgenutzt wirst. Auf dich selbst zu achten und auch einmal Nein zu sagen, steht dabei nicht im Widerspruch zu deiner Warmherzigkeit."}
+      },
+      "items": [
+        {"id":"A1","type":"likert","text":"Ich gehe grundsätzlich davon aus, dass die meisten Menschen es ehrlich mit mir meinen.","facet":"Vertrauen","reverse":false,"options":[]},
+        {"id":"A2","type":"likert","text":"Das Wohlergehen anderer liegt mir wirklich am Herzen.","facet":"Hilfsbereitschaft","reverse":false,"options":[]},
+        {"id":"A3","type":"likert","text":"Ich kann gut mitfühlen, wenn es jemandem schlecht geht.","facet":"Mitgefühl","reverse":false,"options":[]},
+        {"id":"A4","type":"likert","text":"Ich biege mir die Wahrheit zurecht, wenn mir das einen Vorteil bringt.","facet":"Aufrichtigkeit","reverse":true,"options":[]},
+        {"id":"A5","type":"likert","text":"In einer Diskussion bestehe ich darauf, dass am Ende meine Sicht zählt.","facet":"Nachgiebigkeit","reverse":true,"options":[]},
+        {"id":"A6","type":"likert","text":"Ich stelle meine eigenen Erfolge gern in den Vordergrund.","facet":"Bescheidenheit","reverse":true,"options":[]},
+        {"id":"A7","type":"scenario","text":"Eine Kollegin bittet dich kurz vor Feierabend um Hilfe bei einer Aufgabe, für die du nicht zuständig bist. Was tust du?","facet":"Hilfsbereitschaft","reverse":false,"options":[{"label":"Ich helfe gern und bleibe so lange, wie es nötig ist.","value":5},{"label":"Ich helfe noch ein paar Minuten, dann mache ich Schluss.","value":3},{"label":"Ich verweise sie an jemand anderen und gehe.","value":2},{"label":"Ich sage, dass es nicht mein Problem ist, und gehe.","value":1}]},
+        {"id":"A8","type":"scenario","text":"Beim Bezahlen merkst du, dass dir an der Kasse versehentlich zu viel Wechselgeld herausgegeben wurde. Wie reagierst du?","facet":"Aufrichtigkeit","reverse":false,"options":[{"label":"Ich weise sofort darauf hin und gebe das Geld zurück.","value":5},{"label":"Bei einem grösseren Betrag sage ich Bescheid, sonst nicht.","value":3},{"label":"Ich behalte es einfach.","value":1}]},
+        {"id":"A9","type":"scenario","text":"Bei der Planung eines gemeinsamen Ausflugs schlagen die anderen ein Ziel vor, das dir weniger gefällt. Was machst du?","facet":"Nachgiebigkeit","reverse":false,"options":[{"label":"Ich schliesse mich gern an, damit alle zufrieden sind.","value":5},{"label":"Ich schlage einen Kompromiss vor, mit dem alle leben können.","value":4},{"label":"Ich nenne meinen Vorschlag und überlasse den anderen die Wahl.","value":2},{"label":"Ich setze mich dafür ein, dass mein Ziel gewählt wird.","value":1}]},
+        {"id":"A10","type":"scenario","text":"Jemand erzählt dir aufgeregt von einem Problem, das dir eher klein vorkommt. Wie gehst du damit um?","facet":"Mitgefühl","reverse":false,"options":[{"label":"Ich höre aufmerksam zu und nehme die Gefühle ernst.","value":5},{"label":"Ich höre kurz zu und versuche, das Thema zu relativieren.","value":3},{"label":"Ich sage, dass man sich darüber nicht aufregen muss.","value":1}]}
+      ]
+    },
+    {
+      "code": "N",
+      "traitNameDe": "Emotionale Empfindsamkeit",
+      "oneLiner": "Diese Dimension beschreibt, wie stark du emotional auf Belastungen reagierst – von ausgeprägter Gelassenheit und innerer Stabilität bis hin zu feiner Empfindsamkeit und intensivem Erleben unter Druck.",
+      "facetNote": "Die Facetten Ängstlichkeit, Reizbarkeit, Niedergeschlagenheit, soziale Unsicherheit, Impulsivität und Stressempfinden beschreiben gemeinsam, wie fein und intensiv du emotional auf Belastungen reagierst.",
+      "highMarkers": ["empfindsam","sensibel","feinfühlig","leicht beunruhigt","tief berührbar"],
+      "lowMarkers": ["gelassen","stabil","ausgeglichen","belastbar","unerschütterlich"],
+      "bands": {
+        "veryLow": {"title":"Tiefe Gelassenheit","text":"Selbst in turbulenten Situationen bleibst du bemerkenswert ruhig, und Rückschläge oder Druck werfen dich kaum aus der Bahn. Sorgen, Reizbarkeit oder innere Unruhe spielen in deinem Alltag eine sehr geringe Rolle, was dir gerade in Krisen einen klaren Kopf bewahrt. Diese Stabilität ist eine echte Stärke für dich und dein Umfeld. Manchmal nimmst du dabei eigene oder fremde Warnsignale erst später wahr oder unterschätzt, wie sehr eine Situation andere emotional bewegt."},
+        "low": {"title":"Ruhiger Gleichmut","text":"Belastungen und Stress begegnest du meist mit innerer Ruhe und bleibst auch bei Gegenwind handlungsfähig. Du machst dir selten lange Sorgen, erholst dich nach Anspannung rasch und strahlst dadurch oft eine beruhigende Sicherheit aus. Das macht dich zu einem verlässlichen Anker, wenn es um dich herum hektisch wird. Mitunter bemerkst du angespannte Stimmungen anderer erst spät oder überhörst eigene Grenzen, weil dich wenig aus der Fassung bringt."},
+        "mid": {"title":"Bewegliches Gleichgewicht","text":"Gefühle wie Anspannung, Unsicherheit oder Freude erlebst du in einem ausgewogenen Mass und kannst je nach Situation gelassen oder feinfühlig reagieren. In ruhigen Phasen bleibst du stabil, in fordernden Momenten spürst du dennoch, was dich und andere bewegt – so wechselst du flexibel zwischen Sachlichkeit und Mitgefühl. Das verschafft dir oft ein gutes Augenmass im Umgang mit Druck. Weil deine Reaktion vom Kontext abhängt, bleibst du anpassungsfähig statt auf ein einziges Muster festgelegt."},
+        "high": {"title":"Feine Empfindsamkeit","text":"Stimmungen, Spannungen und Risiken nimmst du oft früh und differenziert wahr und reagierst aufmerksam auf das, was um dich herum geschieht. Das schenkt dir Tiefe, Empathie und ein gutes Gespür für feine Zwischentöne, die anderen entgehen. Zugleich können dich Sorgen, Selbstzweifel oder innere Anspannung stärker beschäftigen und mehr Energie kosten. Bewusste Pausen und ein wohlwollender Umgang mit dir selbst helfen dir, diese Feinfühligkeit als Stärke zu nutzen."},
+        "veryHigh": {"title":"Intensives Erleben","text":"Du erlebst deine Gefühle sehr intensiv und reagierst unmittelbar auf Belastungen, Kritik oder Ungewissheit. Dieses feine Gespür macht dich oft besonders mitfühlend, gewissenhaft und aufmerksam für Details und Gefahren, die andere übersehen. Gleichzeitig können Anspannung, Grübeln oder schnell wechselnde Stimmungen dich stark fordern und das Abschalten erschweren. Verlässliche Routinen, tragfähige Beziehungen und kleine Entlastungsmomente helfen dir, diese Tiefe in Balance zu halten."}
+      },
+      "items": [
+        {"id":"N1","type":"likert","text":"Ich mache mir oft schon im Voraus Sorgen über Dinge, die am Ende gar nicht eintreten.","facet":"Ängstlichkeit","reverse":false,"options":[]},
+        {"id":"N2","type":"likert","text":"Auch wenn die Zeit knapp wird, bleibe ich meistens ruhig und gelassen.","facet":"Stressempfinden","reverse":true,"options":[]},
+        {"id":"N3","type":"likert","text":"Schon kleine Ärgernisse im Alltag reizen mich schnell und machen mich gereizt.","facet":"Reizbarkeit","reverse":false,"options":[]},
+        {"id":"N4","type":"likert","text":"Wenn etwas schiefgeht, ziehe ich mich davon nur selten lange herunter.","facet":"Niedergeschlagenheit","reverse":true,"options":[]},
+        {"id":"N5","type":"likert","text":"Unter neuen Leuten beschäftigt mich oft die Frage, wie ich auf die anderen wirke.","facet":"soziale Unsicherheit","reverse":false,"options":[]},
+        {"id":"N6","type":"likert","text":"Wenn mich etwas im Moment stark mitreisst, behalte ich meine Gefühle gut im Griff.","facet":"Impulsivität","reverse":true,"options":[]},
+        {"id":"N7","type":"scenario","text":"Eine wichtige E-Mail, die du erwartet hast, bleibt den ganzen Tag aus. Wie geht es dir damit?","facet":"Ängstlichkeit","reverse":false,"options":[{"label":"Ich denke kaum daran und mache in Ruhe weiter.","value":1},{"label":"Ich schaue ab und zu nach, bleibe aber entspannt.","value":3},{"label":"Ich grüble ständig, was schiefgelaufen sein könnte.","value":5}]},
+        {"id":"N8","type":"scenario","text":"Im vollen Supermarkt drängelt sich jemand direkt vor dir an die Kasse. Wie reagierst du?","facet":"Reizbarkeit","reverse":false,"options":[{"label":"Es ist mir egal, ich warte einfach.","value":1},{"label":"Es stört mich kurz, dann lasse ich es los.","value":3},{"label":"Ich ärgere mich und spüre, wie es in mir hochkocht.","value":5}]},
+        {"id":"N9","type":"scenario","text":"Du sollst kurzfristig vor einer Gruppe von Kollegen etwas vortragen. Was geht in dir vor?","facet":"soziale Unsicherheit","reverse":false,"options":[{"label":"Ich lege locker los, ohne gross nachzudenken.","value":1},{"label":"Ich bin etwas nervös, fange mich aber schnell.","value":3},{"label":"Mir wird flau und ich befürchte, mich zu blamieren.","value":4},{"label":"Ich bin so angespannt, dass ich am liebsten absagen würde.","value":5}]},
+        {"id":"N10","type":"scenario","text":"Du siehst online spontan ein teures Angebot, das nur heute gilt. Wie gehst du vor?","facet":"Impulsivität","reverse":false,"options":[{"label":"Ich schlafe eine Nacht darüber und entscheide später.","value":1},{"label":"Ich prüfe kurz mein Budget und überlege es mir.","value":3},{"label":"Ich kaufe sofort, weil ich es jetzt unbedingt haben will.","value":5}]}
+      ]
+    }
+  ]
+};
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+const TRAIT_COLOR = { O:"var(--c-O)", C:"var(--c-C)", E:"var(--c-E)", A:"var(--c-A)", N:"var(--c-N)" };
+const LIKERT = ["Trifft gar nicht zu","Trifft eher nicht zu","Teils/teils","Trifft eher zu","Trifft voll zu"];
+const ROUND_SIZE = 7;
+const CHECK = '<svg viewBox="0 0 13 13"><path d="M1 7l3.5 3.5L12 2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const LS_PROFILES = "pa_profiles";
+const LS_RESULTS  = "pa_results";
+
+let state = { profile:null, order:[], idx:0, answers:{}, consentOk:false, lastResult:null };
+
+/* Vertiefungs-Inhalte fuer den ausfuehrlichen Bericht */
+function level(v){ return v>=60?'high': (v<=40?'low':'mid'); }
+const COMBO_RULES = [
+  {id:'OC_hh', a:['O','high'], b:['C','high']},
+  {id:'OC_hl', a:['O','high'], b:['C','low']},
+  {id:'OC_lh', a:['O','low'],  b:['C','high']},
+  {id:'CN_hh', a:['C','high'], b:['N','high']},
+  {id:'CN_hl', a:['C','high'], b:['N','low']},
+  {id:'EA_hh', a:['E','high'], b:['A','high']},
+  {id:'EA_hl', a:['E','high'], b:['A','low']},
+  {id:'EC_lh', a:['E','low'],  b:['C','high']},
+  {id:'EO_lh', a:['E','low'],  b:['O','high']},
+  {id:'AN_hh', a:['A','high'], b:['N','high']},
+  {id:'EN_lh', a:['E','low'],  b:['N','high']},
+  {id:'EN_hl', a:['E','high'], b:['N','low']},
+  {id:'AC_hh', a:['A','high'], b:['C','high']},
+  {id:'EO_hh', a:['E','high'], b:['O','high']},
+  {id:'AN_ll', a:['A','low'],  b:['N','low']},
+  {id:'ON_hh', a:['O','high'], b:['N','high']}
+];
+const ENRICH = {
+  facets: {
+    O: {
+      "Fantasie": {high:"eine lebhafte Vorstellungskraft", low:"ein bodenständiger Sinn für das Konkrete"},
+      "Ästhetik": {high:"eine tiefe Empfänglichkeit für Kunst und Schönheit", low:"ein nüchterner, wenig kunstbezogener Zugang"},
+      "Intellekt": {high:"eine ausgeprägte Freude am Denken und an Ideen", low:"eine Vorliebe für Praktisches gegenüber abstrakten Überlegungen"},
+      "Abenteuerlust": {high:"eine starke Offenheit für Neues und Ungewohntes", low:"eine Vorliebe für Vertrautes und Bewährtes"},
+      "Gefühlsoffenheit": {high:"ein feiner Zugang zur eigenen Gefühlswelt", low:"ein zurückhaltender Umgang mit dem eigenen Gefühlsleben"},
+      "Werte": {high:"eine grosse Bereitschaft, eigene Überzeugungen zu hinterfragen", low:"ein festes Halten an etablierten Überzeugungen"}
+    },
+    C: {
+      "Kompetenzgefühl": {high:"ein festes Vertrauen in die eigenen Fähigkeiten", low:"ein häufiges Zweifeln an den eigenen Fähigkeiten"},
+      "Leistungsstreben": {high:"ein ausgeprägter Ehrgeiz, anspruchsvolle Ziele zu erreichen", low:"eine gelassene Zufriedenheit ohne grossen Leistungsdrang"},
+      "Selbstdisziplin": {high:"eine verlässliche Fähigkeit, Aufgaben auch gegen Widerstände durchzuziehen", low:"eine Neigung, sich leicht ablenken zu lassen und Dinge aufzuschieben"},
+      "Besonnenheit": {high:"eine bedachte Neigung, vor dem Handeln gründlich abzuwägen", low:"eine spontane Bereitschaft, rasch und aus dem Moment heraus zu handeln"},
+      "Pflichtbewusstsein": {high:"ein starkes Gefühl für Verbindlichkeit und moralische Verpflichtung", low:"ein lockerer Umgang mit Regeln und Verpflichtungen"},
+      "Ordnungsliebe": {high:"eine ausgeprägte Freude an Struktur und Ordnung", low:"eine entspannte Gleichgültigkeit gegenüber Ordnung"}
+    },
+    E: {
+      "Herzlichkeit": {high:"eine offene, herzliche Wärme im Umgang mit Menschen", low:"eine zurückhaltende, eher distanzierte Art im Kontakt"},
+      "Geselligkeit": {high:"eine ausgeprägte Freude an der Gesellschaft anderer", low:"eine Vorliebe für kleine Runden und Zeit für dich allein"},
+      "Durchsetzungsfähigkeit": {high:"eine natürliche Neigung, Führung und Initiative zu übernehmen", low:"eine zurückhaltende Art, die anderen gern den Vortritt lässt"},
+      "Gesprächigkeit": {high:"eine lebhafte Lust am Reden und am sprachlichen Austausch", low:"eine eher wortkarge, abwägende Zurückhaltung im Gespräch"},
+      "Frohsinn": {high:"eine spürbare Heiterkeit und ein leicht zugängliches Lachen", low:"eine ernstere, gemessenere Grundstimmung"},
+      "Erlebnishunger": {high:"ein starkes Verlangen nach Abwechslung und neuen Reizen", low:"eine Vorliebe für ruhige, überschaubare Verhältnisse"},
+      "Aktivität": {high:"ein hohes Tempo und ein Leben voller Schwung und Betriebsamkeit", low:"ein bedächtiges, entspanntes Lebenstempo"}
+    },
+    A: {
+      "Vertrauen": {high:"ein grundlegendes Vertrauen in die guten Absichten anderer", low:"eine wachsame Vorsicht gegenüber den Absichten anderer"},
+      "Hilfsbereitschaft": {high:"eine selbstverständliche Bereitschaft, andere zu unterstützen", low:"eine klare Ausrichtung auf die eigenen Anliegen"},
+      "Mitgefühl": {high:"ein warmes Mitempfinden für das Ergehen anderer", low:"eine sachliche Distanz zu den Gefühlen anderer"},
+      "Aufrichtigkeit": {high:"ein geradliniger, offener Umgang mit anderen", low:"ein taktisches Geschick im Umgang mit anderen"},
+      "Nachgiebigkeit": {high:"eine grosse Bereitschaft, Konflikte einvernehmlich beizulegen", low:"eine ausgeprägte Bereitschaft, für die eigene Position einzustehen"},
+      "Bescheidenheit": {high:"ein zurückhaltendes Auftreten ohne Drang nach Geltung", low:"ein selbstbewusstes Bewusstsein für den eigenen Wert"}
+    },
+    N: {
+      "Ängstlichkeit": {high:"ein waches Gespür für mögliche Gefahren", low:"eine ruhige Unbekümmertheit gegenüber Ungewissheit"},
+      "Stressempfinden": {high:"eine feine Wahrnehmung für Druck und Anspannung", low:"eine belastbare Gelassenheit in fordernden Phasen"},
+      "Reizbarkeit": {high:"eine rasche Ansprechbarkeit für Ärger", low:"eine gleichmütige Nachsicht gegenüber Störungen"},
+      "Niedergeschlagenheit": {high:"eine starke Empfänglichkeit für schwermütige Stimmungen", low:"eine stabile, eher aufgehellte Grundstimmung"},
+      "soziale Unsicherheit": {high:"eine aufmerksame Sensibilität für das Urteil anderer", low:"eine entspannte Selbstsicherheit im Kontakt mit anderen"},
+      "Impulsivität": {high:"eine spontane Nachgiebigkeit gegenüber momentanen Bedürfnissen", low:"eine besonnene Zurückhaltung gegenüber aufkommenden Verlockungen"}
+    }
+  },
+  combos: {
+    "OC_hh": {titel:"Visionen mit Bodenhaftung", text:"Bei dir treffen sprudelnde Ideen auf echten Umsetzungswillen: Du denkst gern voraus, spielst mit Möglichkeiten und baust ihnen zugleich ein Gerüst, das trägt. So bleiben deine Visionen nicht im Kopf, sondern werden zu Plänen, die du Schritt für Schritt verwirklichst. Achte nur darauf, dass dein hoher Anspruch an das fertige Werk dir die Freude am Ausprobieren nicht verstellt."},
+    "OC_hl": {titel:"Ideen im Überfluss", text:"Aus dir sprudelt es nur so vor Einfällen, Neugier und Lust am Neuen, und du gehst die Dinge mit einer angenehmen Leichtigkeit an. Statt jedem Plan akribisch zu folgen, springst du dorthin, wo es gerade kribbelt, und kommst so auf Wege, die anderen verschlossen bleiben. Die Kehrseite: Manches Vielversprechende bleibt liegen, weil schon das nächste Funkeln lockt, bevor das Erste vollendet ist."},
+    "OC_lh": {titel:"Verlässlich und bodenständig", text:"Du vertraust auf Bewährtes, arbeitest praktisch und bringst Dinge zuverlässig zu Ende, statt dich an jedem neuen Trend zu verausgaben. Wer auf dich zählt, weiss, dass du hältst, was du zusagst, und mit ruhiger Konsequenz dranbleibst. Diese Stabilität gibt anderen Halt; manchmal lohnt es sich, einer ungewohnten Idee trotzdem eine Chance zu geben, bevor du sie beiseitelegst."},
+    "CN_hh": {titel:"Hoher Anspruch, feines Gespür", text:"Du legst die Latte hoch, arbeitest sorgfältig und willst Dinge wirklich gut machen, und zugleich spürst du jeden Druck sehr deutlich. Diese Mischung macht dich präzise und verantwortungsbewusst, kann dich aber auch dazu bringen, dich selbst zu streng zu nehmen. Es hilft dir, ein gutes Ergebnis öfter gelten zu lassen und dir dieselbe Nachsicht zu schenken, die du anderen so selbstverständlich gibst."},
+    "CN_hl": {titel:"Ruhig liefern unter Druck", text:"Du bewahrst einen kühlen Kopf, wenn es eng wird: gewissenhaft, zuverlässig und schwer aus der Ruhe zu bringen. Wo andere ins Schwitzen geraten, behältst du den Überblick und bringst die Aufgabe trotzdem sauber über die Ziellinie. Diese Belastbarkeit ist ein echtes Pfund; achte nur darauf, dass deine Gelassenheit nicht übersieht, wenn ein Anliegen wirklich Dringlichkeit braucht."},
+    "EA_hh": {titel:"Wärme, die verbindet", text:"Du gehst offen und herzlich auf Menschen zu und hast ein feines Gespür dafür, dass es allen gut geht. Gespräche, gemeinsames Lachen und ein harmonisches Miteinander geben dir Energie, und oft bist du es, der Menschen zusammenbringt. Deine Liebe zur Harmonie ist ein Geschenk; pass nur auf, dass du eigene Wünsche nicht zu leise machst, nur um den Frieden zu wahren."},
+    "EA_hl": {titel:"Gesellig und durchsetzungsstark", text:"Du suchst die Bühne und das Gespräch, hast aber zugleich klare Ziele und scheust den Wettbewerb nicht. Du sprichst Dinge offen an, übernimmst gern die Führung und bringst mit deiner Energie Bewegung in eine Gruppe. Diese Mischung macht dich zu einem natürlichen Antreiber; ab und zu hilft ein bewusstes Innehalten, um zu spüren, wo die anderen gerade stehen."},
+    "EC_lh": {titel:"Konzentriert im Hintergrund", text:"Du arbeitest am liebsten ruhig, gründlich und eigenständig, ohne grosses Aufsehen darum zu machen. Während andere reden, bringst du die Dinge in der Tiefe voran und lieferst Ergebnisse, die durch Sorgfalt überzeugen. Diese stille Verlässlichkeit ist enorm wertvoll; trau dich ruhig, deine Beiträge auch sichtbarer zu machen, damit sie die Anerkennung bekommen, die sie verdienen."},
+    "EO_lh": {titel:"Reiche innere Welten", text:"Nach aussen wirkst du eher zurückhaltend, doch in dir lebt eine farbige, fantasievolle Welt voller Gedanken und Bilder. Du brauchst keine grosse Bühne, um dich lebendig zu fühlen; deine Tiefe entfaltet sich im Stillen, im Nachsinnen und im freien Spiel der Ideen. Manchmal lohnt es sich, anderen einen Blick in diesen inneren Reichtum zu gewähren, denn dort steckt mehr, als man dir von aussen ansieht."},
+    "AN_hh": {titel:"Feinfühlig und mitfühlend", text:"Du nimmst die Stimmungen um dich herum mit grosser Feinheit wahr und möchtest, dass es den Menschen in deiner Nähe gut geht. Diese Mischung aus Wärme und Sensibilität macht dich zu einem wunderbaren Gegenüber, dem sich andere gern anvertrauen. Die feine Spannung dabei: Fremde Sorgen werden schnell zu deinen, und es ist eine echte Kunst, mitzufühlen, ohne dich selbst dabei zu verlieren."},
+    "EN_lh": {titel:"Sensibel und zurückgezogen", text:"Du brauchst deinen Rückzug, um aufzutanken, und erlebst trubelige Situationen oft als anstrengend. Dahinter steckt ein feines Gespür für Zwischentöne, das dich aufmerksam und bedacht macht. Es ist klug, deinem Ruhebedürfnis Raum zu geben; in kleinen, vertrauten Kreisen zeigst du dann eine Tiefe, die in der lauten Menge oft untergeht."},
+    "EN_hl": {titel:"Schwungvoll und gelassen", text:"Du gehst mit viel Energie und einer angenehmen Unbeschwertheit auf andere zu und lässt dich von Aufregung selten anstecken. Diese Mischung aus Schwung und innerer Ruhe macht dich zu jemandem, der gute Laune verbreitet und auch in lebhaften Momenten den Boden behält. Deine Leichtigkeit tut anderen gut; ein wacher Blick für leisere Töne rundet sie schön ab."},
+    "AC_hh": {titel:"Verlässlich und rücksichtsvoll", text:"Du verbindest Gewissenhaftigkeit mit echter Rücksicht: Du hältst deine Zusagen, denkst an die anderen und bist im Team jemand, auf den man bauen kann. Verantwortung übernimmst du selbstverständlich, und du tust es so, dass sich niemand übergangen fühlt. Diese Haltung schafft Vertrauen; achte nur darauf, dass deine Hilfsbereitschaft nicht dazu führt, dass du dauerhaft mehr trägst als dir guttut."},
+    "EO_hh": {titel:"Begeisterung, die ansteckt", text:"Du sprudelst vor Ideen, suchst den Austausch und steckst andere mit deiner Begeisterung an. Neues zieht dich magisch an, und im Gespräch mit Menschen entfachst du Funken, aus denen schnell ganze Feuerwerke werden. Diese ansteckende Offenheit ist eine seltene Gabe; gelegentlich hilft es, die Fülle der Anregungen zu bündeln, damit aus den vielen Funken auch ein beständiges Licht wird."},
+    "AN_ll": {titel:"Robust und sachlich", text:"Du hast eine dicke Haut, bleibst sachlich und lässt dich von Gegenwind und Spannungen kaum aus der Ruhe bringen. Konflikte schrecken dich nicht, du sprichst Dinge klar an und stehst für deine Position ein. Diese Unerschütterlichkeit ist eine echte Stärke; ein bewusster Blick auf die feineren Gefühle anderer sorgt dafür, dass deine Klarheit als Rückhalt und nicht als Härte ankommt."},
+    "ON_hh": {titel:"Tiefes, vielschichtiges Innenleben", text:"In dir verbinden sich eine lebhafte Fantasie und eine tiefe Empfindsamkeit zu einem reichen, vielschichtigen Innenleben. Du erlebst Eindrücke intensiv, spürst Schönheit und Stimmungen feiner als viele andere und trägst eine spürbare künstlerische Ader in dir. Diese Tiefe ist ein grosses Geschenk; sie bittet zugleich darum, dass du dir Räume schaffst, in denen die Fülle der Eindrücke sich setzen und in Ausdruck verwandeln darf."}
+  },
+  framing: {
+    einleitung: "Schön, dass du dir einen Moment Zeit nimmst, {name}. Was du hier liest, ist keine Schublade und kein Urteil, sondern eine wohlwollende Einladung, dich selbst ein Stück genauer kennenzulernen. Sieh es als einen Spiegel, der dir zeigt, was dich im Kern ausmacht, mit all den Facetten, die dich einzigartig machen.",
+    gesamteindruckPre: "Auf einen Blick zeigt sich dabei ein erstes Bild:",
+    facettenIntro: "Schauen wir nun etwas genauer hin und betrachten die einzelnen Facetten, die diesem Bild seine Tiefe geben.",
+    staerkenLabel: "Deine Ausstrahlung",
+    hinweisLabel: "Sanfte Denkanstösse",
+    zusammenspielIntro: "Eine Persönlichkeit ist immer mehr als die Summe ihrer Teile. Spannend wird es dort, wo deine Eigenschaften sich begegnen und gegenseitig färben.",
+    zusammenspielFallback: "Bei dir halten sich die Eigenschaften erstaunlich fein die Waage, ohne dass eine einzelne Kombination besonders laut hervortritt. Das ist alles andere als unauffällig, im Gegenteil: Es bedeutet, dass du dich je nach Situation flexibel einstellen kannst, statt von einem einzigen Muster geführt zu werden. Wo andere zwischen Extremen schwanken, findest du oft das mittlere, anpassungsfähige Mass. Diese Ausgewogenheit ist eine stille, aber echte Stärke, die dir in vielen Lebenslagen Freiheit schenkt.",
+    abschluss: "Behalte im Hinterkopf, {name}: Was du hier gelesen hast, ist eine Momentaufnahme, kein endgültiges Etikett. Persönlichkeit ist lebendig, sie wächst, reift und verändert sich mit deinen Erfahrungen. Nimm mit, was dich anspricht, lass den Rest in Ruhe, und sei dabei vor allem freundlich zu dir selbst."
+  }
+};
+
+/* Soziale & persoenliche Eigenschaften (Zusatzteil) */
+const SOCIAL = { traits: [
+  { code:"EMP", name:"Empathie", oneLiner:"Du nimmst die Gefühle anderer Menschen wahr, versetzt dich in ihre Lage und fühlst mit ihnen mit.",
+    items:[ {id:"EMP1",text:"Wenn es jemandem in meiner Nähe schlecht geht, spüre ich das schnell.",reverse:false},{id:"EMP2",text:"Ich kann gut nachempfinden, was in einer anderen Person gerade vorgeht.",reverse:false},{id:"EMP3",text:"Die Stimmungen anderer Menschen lassen mich meist ziemlich kalt.",reverse:true} ],
+    bands:{ low:{text:"Du gehst eher sachlich an Situationen heran und lässt dich von den Stimmungen anderer nicht so leicht beeinflussen. Das verschafft dir Klarheit und Distanz, etwa bei Entscheidungen oder in stressigen Momenten. Manchmal entgehen dir dabei feine emotionale Signale, sodass ein bewusster Blick auf das Befinden deines Gegenübers hilfreich sein kann."}, mid:{text:"Du nimmst die Gefühle anderer in der Regel gut wahr und kannst dich in sie hineinversetzen, ohne dich darin zu verlieren. So findest du oft eine gesunde Balance zwischen Mitgefühl und eigener Abgrenzung. In besonders aufwühlenden Momenten gelingt dir das mal mehr, mal weniger leicht."}, high:{text:"Du spürst die Stimmungen und Bedürfnisse anderer sehr feinfühlig und fühlst intensiv mit ihnen mit. Das macht dich zu einem aufmerksamen, verständnisvollen Gegenüber, dem sich Menschen gerne anvertrauen. Weil du fremde Gefühle so stark aufnimmst, ist es wichtig, dass du auch auf deine eigenen Grenzen und dein Wohlbefinden achtest."} },
+    highMarkers:["mitfühlend","feinfühlig","verständnisvoll"], lowMarkers:["sachlich","distanziert","nüchtern"] },
+  { code:"VER", name:"Verlässlichkeit", oneLiner:"Du hältst deine Zusagen ein und bist pünktlich und berechenbar, sodass andere sich auf dich verlassen können.",
+    items:[ {id:"VER1",text:"Wenn ich etwas zusage, halte ich mich daran.",reverse:false},{id:"VER2",text:"Zu Verabredungen und Terminen erscheine ich pünktlich.",reverse:false},{id:"VER3",text:"Es kommt vor, dass ich vergesse, was ich anderen versprochen habe.",reverse:true} ],
+    bands:{ low:{text:"Du nimmst es mit festen Zusagen und Terminen eher locker und entscheidest gern spontan, statt dich früh zu binden. Das gibt dir Flexibilität, kann aber dazu führen, dass andere nicht immer genau wissen, woran sie bei dir sind. Mit klaren Absprachen und ein paar Erinnerungen fällt es dir leichter, dort verlässlich zu sein, wo es anderen wichtig ist."}, mid:{text:"In den meisten Fällen kann man sich gut auf dich verlassen und du hältst, was du zusagst. Wenn viel zusammenkommt oder etwas Unerwartetes passiert, rutscht aber auch mal eine Zusage oder ein Termin durch. Diese Mischung aus Verbindlichkeit und Spielraum erlaubt dir, zuverlässig zu sein, ohne dich selbst zu sehr unter Druck zu setzen."}, high:{text:"Auf dich ist Verlass: Was du zusagst, setzt du um, und du bist pünktlich und berechenbar. Andere können fest mit dir planen, was dir viel Vertrauen einbringt. Achte darauf, dich nicht zu sehr zu verpflichten, damit deine hohen Ansprüche an dich selbst nicht zur Last werden."} },
+    highMarkers:["zuverlässig","pünktlich","verbindlich"], lowMarkers:["spontan","flexibel","ungebunden"] },
+  { code:"AUT", name:"Authentizität", oneLiner:"Du stehst echt und ehrlich zu dir selbst und verstellst dich nicht, um anderen zu gefallen.",
+    items:[ {id:"AUT1",text:"Ich bleibe mir selbst treu, statt mich zu verstellen, um besser anzukommen.",reverse:false},{id:"AUT2",text:"Ich sage offen, was ich denke, auch wenn es nicht jedem gefällt.",reverse:false},{id:"AUT3",text:"Ich passe mein Auftreten oft an das an, was andere von mir erwarten.",reverse:true} ],
+    bands:{ low:{text:"Du achtest stark darauf, dich an dein Umfeld anzupassen, und zeigst dich je nach Situation unterschiedlich. Das macht dich flexibel und sozial geschickt. Zugleich kann es dir zeitweise das Gefühl geben, dich zu verstellen oder den Kontakt zu deinen eigenen Bedürfnissen zu verlieren."}, mid:{text:"Du bist in vielen Situationen du selbst und kannst dich zugleich gut auf dein Gegenüber einstellen. Wo es passt, zeigst du offen, wie du denkst und fühlst, an anderer Stelle hältst du dich bewusst zurück. Diese Balance hilft dir, echt zu bleiben und trotzdem rücksichtsvoll mit anderen umzugehen."}, high:{text:"Du stehst klar zu dir selbst und zeigst dich anderen so, wie du wirklich bist. Deine Offenheit wirkt glaubwürdig und schafft Vertrauen, auch wenn deine Direktheit nicht immer auf Zustimmung stösst. Manchmal lohnt es sich, neben der Ehrlichkeit auch den passenden Moment und Ton mitzudenken."} },
+    highMarkers:["echt","ehrlich","geradlinig"], lowMarkers:["anpassungsfähig","zurückhaltend","wandelbar"] },
+  { code:"TOL", name:"Toleranz", oneLiner:"Du begegnest anderen Meinungen, Lebensweisen und Andersartigkeit offen und akzeptierend.",
+    items:[ {id:"TOL1",text:"Ich komme gut mit Menschen zurecht, die ganz anders leben als ich.",reverse:false},{id:"TOL2",text:"Wenn jemand eine andere Meinung vertritt, höre ich offen zu.",reverse:false},{id:"TOL3",text:"Es stört mich, wenn andere ihr Leben nach ganz anderen Werten ausrichten.",reverse:true} ],
+    bands:{ low:{text:"Du hast klare Vorstellungen davon, wie Dinge sein sollten, und merkst schnell, wenn andere davon abweichen. Das gibt dir Orientierung und einen festen Standpunkt, kann aber dazu führen, dass dir fremde Lebensweisen oder Meinungen Unbehagen bereiten. Manchmal lohnt es sich, bewusst neugierig zu bleiben, bevor du bewertest."}, mid:{text:"Du bist gegenüber Andersartigkeit grundsätzlich aufgeschlossen und kannst dich auf unterschiedliche Menschen einlassen. Bei manchen Themen oder Haltungen spürst du jedoch eine Grenze, an der dir Offenheit schwerer fällt. So verbindest du Akzeptanz mit einem eigenen Standpunkt, was dir eine gewisse Ausgewogenheit gibt."}, high:{text:"Du begegnest anderen Meinungen, Kulturen und Lebensweisen mit echter Offenheit und Neugier. Verschiedenheit empfindest du eher als Bereicherung denn als Bedrohung, und du fühlst dich auch in vielfältigen Umgebungen wohl. Achte gelegentlich darauf, dass deine Offenheit nicht dazu führt, eigene Werte aus dem Blick zu verlieren."} },
+    highMarkers:["aufgeschlossen","akzeptierend","weltoffen"], lowMarkers:["festgelegt","abgrenzend","kritisch"] },
+  { code:"DIP", name:"Diplomatie", oneLiner:"Du vermittelst taktvoll zwischen Standpunkten und entschärfst Spannungen ruhig und geschickt.",
+    items:[ {id:"DIP1",text:"Wenn zwischen zwei Personen die Stimmung kippt, finde ich Worte, die beide Seiten beruhigen.",reverse:false},{id:"DIP2",text:"Auch unangenehme Rückmeldungen verpacke ich so, dass mein Gegenüber sie gut annehmen kann.",reverse:false},{id:"DIP3",text:"In hitzigen Diskussionen platzt es oft direkt aus mir heraus, ohne dass ich auf den Ton achte.",reverse:true} ],
+    bands:{ low:{text:"Du sagst klar und ohne Umschweife, was du denkst, und Klartext ist dir oft lieber als vorsichtiges Abwägen. Das wirkt ehrlich und schafft Orientierung, kann in angespannten Momenten aber auch ecken oder Spannungen verstärken. Es lohnt sich, gelegentlich bewusst auf Ton und Timing zu achten, bevor du etwas ansprichst."}, mid:{text:"Du gehst meist taktvoll mit anderen um und findest in vielen Situationen einen verbindlichen Ton. Wenn es ruhig zugeht, vermittelst du gut; in sehr hitzigen Momenten fällt dir das geschickte Ausgleichen manchmal schwerer. So verbindest du Ehrlichkeit mit einem soliden Gespür für dein Gegenüber."}, high:{text:"Du bringst unterschiedliche Standpunkte geschickt zusammen und entschärfst auch angespannte Lagen ruhig und einfühlsam. Menschen fühlen sich von dir verstanden, selbst wenn du Kritisches ansprichst. Achte gelegentlich darauf, dass dein eigener Standpunkt dabei nicht zu kurz kommt."} },
+    highMarkers:["taktvoll","vermittelnd","ausgleichend"], lowMarkers:["direkt","unverblümt","konfrontativ"] },
+  { code:"CHA", name:"Charisma", oneLiner:"Charisma beschreibt deine Ausstrahlung und die Fähigkeit, andere zu begeistern und mitzureissen.",
+    items:[ {id:"CHA1",text:"Wenn ich von etwas erzähle, springt meine Begeisterung leicht auf andere über.",reverse:false},{id:"CHA2",text:"In einer Gruppe ziehe ich die Aufmerksamkeit der anderen schnell auf mich.",reverse:false},{id:"CHA3",text:"Im Mittelpunkt zu stehen ist mir eher unangenehm.",reverse:true} ],
+    bands:{ low:{text:"Du wirkst eher zurückhaltend und überlässt die grosse Bühne gern anderen. Deine Wirkung entfaltet sich oft leiser, etwa im Eins-zu-eins-Gespräch oder über das, was du tust, statt über das, was du nach aussen trägst. Manchmal wird dein Beitrag dadurch leicht übersehen, obwohl er Substanz hat."}, mid:{text:"Du kannst Menschen für dich und deine Anliegen gewinnen, ohne dich dabei ständig in den Vordergrund zu drängen. Je nach Situation gehst du in Führung oder hältst dich bewusst zurück. So wirkst du präsent, aber nicht aufdringlich, und behältst einen guten Draht zu unterschiedlichen Menschen."}, high:{text:"Du strahlst eine starke Präsenz aus und steckst andere mit deiner Energie schnell an. Menschen folgen dir gern und lassen sich von dir motivieren und mitreissen. Achte darauf, dass deine Ausstrahlung Raum für die Stimmen anderer lässt, damit Begeisterung nicht in Dominanz kippt."} },
+    highMarkers:["mitreissend","ausstrahlungsstark","begeisternd"], lowMarkers:["zurückhaltend","unauffällig","leise"] },
+  { code:"SOU", name:"Souveränität", oneLiner:"Du bewahrst auch unter Druck Gelassenheit, Sicherheit und Haltung.",
+    items:[ {id:"SOU1",text:"In stressigen Situationen bleibe ich ruhig und behalte den Überblick.",reverse:false},{id:"SOU2",text:"Auch wenn andere nervös werden, vertraue ich darauf, dass ich die Lage im Griff habe.",reverse:false},{id:"SOU3",text:"Wenn etwas schiefläuft, gerate ich schnell aus der Fassung.",reverse:true} ],
+    bands:{ low:{text:"Druck und unerwartete Situationen bringen dich spürbar aus dem Gleichgewicht, und es fällt dir schwer, in der Hitze des Moments ruhig zu bleiben. Deine Reaktionen sind oft unmittelbar und ehrlich, was andere als nahbar erleben können. Mit etwas mehr Abstand und Vorbereitung gewinnst du Schritt für Schritt an Sicherheit."}, mid:{text:"In den meisten Lagen bewahrst du eine solide Ruhe und findest nach einem kurzen Moment der Anspannung wieder zu dir. Bei besonders grossem Druck kann deine Gelassenheit ins Wanken geraten, doch du fasst dich meist rasch wieder. Diese Mischung aus Bodenständigkeit und echtem Empfinden wirkt auf andere ausgeglichen und glaubwürdig."}, high:{text:"Selbst wenn es turbulent wird, strahlst du Ruhe und Sicherheit aus und behältst klar den Überblick. Andere verlassen sich gern auf deine Haltung, weil du auch in Drucksituationen besonnen bleibst und deinem eigenen Urteil vertraust. Achte gelegentlich darauf, dass deine Gelassenheit von anderen nicht als Distanz missverstanden wird."} },
+    highMarkers:["gelassen","souverän","standfest"], lowMarkers:["reizbar","unsicher","nervös"] },
+  { code:"WEI", name:"Weitsicht", oneLiner:"Du denkst vorausschauend, behältst langfristige Folgen im Blick und beziehst das grosse Ganze in deine Entscheidungen ein.",
+    items:[ {id:"WEI1",text:"Bei Entscheidungen überlege ich genau, welche Folgen sie in einigen Jahren haben könnten.",reverse:false},{id:"WEI2",text:"Ich entscheide meist danach, was kurzfristig am besten passt, ohne weit vorauszudenken.",reverse:true},{id:"WEI3",text:"Bevor ich etwas angehe, denke ich darüber nach, wie es in das grössere Ganze passt.",reverse:false} ],
+    bands:{ low:{text:"Du lebst eher im Hier und Jetzt und triffst Entscheidungen oft spontan, ohne lange über ferne Folgen nachzudenken. Das macht dich flexibel und handlungsfreudig, du kannst Chancen schnell ergreifen. Manchmal überraschen dich allerdings spätere Konsequenzen, die sich mit etwas mehr Vorausdenken hätten abschätzen lassen."}, mid:{text:"Du verbindest einen Blick auf die Zukunft mit der Fähigkeit, im Moment zu handeln. In vielen Situationen wägst du längerfristige Folgen ab, ohne dich von ihnen lähmen zu lassen. So findest du meist eine gute Balance zwischen vorausschauender Planung und pragmatischem Anpacken."}, high:{text:"Du denkst stark in längeren Zeiträumen und behältst auch bei einzelnen Entscheidungen das grosse Ganze im Blick. Das hilft dir, Entwicklungen früh zu erkennen und kluge, nachhaltige Weichen zu stellen. Gelegentlich kann dieses weite Vorausdenken dazu führen, dass du Entscheidungen aufschiebst oder dich in möglichen Szenarien verlierst."} },
+    highMarkers:["vorausschauend","strategisch","umsichtig"], lowMarkers:["spontan","gegenwartsbezogen","impulsiv"] },
+  { code:"SKE", name:"Skepsis", oneLiner:"Du hinterfragst Aussagen kritisch und prüfst sie, bevor du sie für wahr hältst.",
+    items:[ {id:"SKE1",text:"Bevor ich etwas glaube, suche ich nach Belegen oder Quellen.",reverse:false},{id:"SKE2",text:"Wenn mir jemand etwas erzählt, frage ich mich, ob es wirklich stimmt.",reverse:false},{id:"SKE3",text:"Ich nehme Aussagen meistens so hin, wie sie mir präsentiert werden.",reverse:true} ],
+    bands:{ low:{text:"Du begegnest Informationen offen und vertrauensvoll und nimmst vieles erst einmal so an, wie es dir gesagt wird. Das macht dich unkompliziert im Umgang und lässt dich Neuem schnell aufgeschlossen begegnen. Manchmal kann es hilfreich sein, etwas genauer nachzufragen, bevor du dich auf eine Aussage verlässt."}, mid:{text:"Du findest eine gute Balance zwischen Vertrauen und gesundem Hinterfragen. Vieles nimmst du an, doch bei wichtigen Dingen schaust du genauer hin und prüfst, ob etwas wirklich stimmt. So bleibst du sowohl aufgeschlossen als auch wachsam."}, high:{text:"Du prüfst Aussagen gründlich und glaubst selten etwas, ohne es zu hinterfragen oder Belege dafür zu sehen. Diese kritische Haltung schützt dich vor vorschnellen Schlüssen und falschen Informationen. Gelegentlich kann es sich lohnen, auch mal etwas Vertrauen zuzulassen, um den Austausch mit anderen leichter zu machen."} },
+    highMarkers:["kritisch","prüfend","hinterfragend"], lowMarkers:["vertrauensvoll","aufgeschlossen","gutgläubig"] },
+  { code:"KRE", name:"Kreativität", oneLiner:"Die Fähigkeit, originelle Ideen zu entwickeln und neue, einfallsreiche Lösungen zu finden.",
+    items:[ {id:"KRE1",text:"Mir fallen oft ungewöhnliche Ideen ein, auf die andere nicht so leicht kommen.",reverse:false},{id:"KRE2",text:"Wenn ich vor einem Problem stehe, probiere ich gerne neue Lösungswege aus, statt beim Bewährten zu bleiben.",reverse:false},{id:"KRE3",text:"Ich halte mich lieber an vertraute Vorgehensweisen, als mir etwas Neues auszudenken.",reverse:true} ],
+    bands:{ low:{text:"Du schätzt Bewährtes und gehst Aufgaben gern auf vertraute, verlässliche Weise an. Das macht dich beständig und sorgt für klare, nachvollziehbare Ergebnisse. In Situationen, die etwas völlig Neues verlangen, fällt es dir vielleicht schwerer, von gewohnten Mustern abzuweichen."}, mid:{text:"Du kannst auf Bewährtes zurückgreifen und bringst zugleich neue Ideen ein, wenn es passt. Je nach Situation wählst du zwischen vertrauten Wegen und originellen Ansätzen, was dich flexibel und ausgewogen macht. So verbindest du Verlässlichkeit mit der nötigen Offenheit für frische Lösungen."}, high:{text:"Du sprudelst vor Ideen und findest oft überraschende, originelle Lösungen, wo andere feststecken. Deine Offenheit für Neues macht dich zu einem Motor für Veränderung und frische Perspektiven. Manchmal kann die Fülle an Einfällen es dir erschweren, dich auf einen Weg festzulegen und ihn konsequent zu Ende zu bringen."} },
+    highMarkers:["einfallsreich","originell","ideenreich"], lowMarkers:["bodenständig","bewahrend","konventionell"] },
+  { code:"BES", name:"Besonnenheit", oneLiner:"Du handelst bedacht, ruhig und überlegt, statt dich von Impulsen treiben zu lassen.",
+    items:[ {id:"BES1",text:"Bevor ich eine Entscheidung treffe, denke ich in Ruhe über die möglichen Folgen nach.",reverse:false},{id:"BES2",text:"In hektischen Situationen bewahre ich einen kühlen Kopf.",reverse:false},{id:"BES3",text:"Ich handle oft spontan, ohne lange nachzudenken.",reverse:true} ],
+    bands:{ low:{text:"Du gehst Dinge gern unmittelbar und spontan an und vertraust auf dein Bauchgefühl. Das macht dich flexibel und schnell, kann aber dazu führen, dass du Entscheidungen triffst, deren Folgen du noch nicht ganz überblickt hast. In Momenten der Aufregung lohnt es sich für dich, bewusst kurz innezuhalten."}, mid:{text:"Du findest meist eine gute Balance zwischen überlegtem Handeln und spontaner Reaktion. Wenn es darauf ankommt, nimmst du dir Zeit zum Nachdenken, lässt dich bei passenden Gelegenheiten aber auch auf dein Gefühl ein. So bleibst du sowohl bedacht als auch beweglich."}, high:{text:"Du gehst Situationen ruhig und durchdacht an und behältst auch unter Druck einen klaren Kopf. Diese Gelassenheit gibt dir und deinem Umfeld Sicherheit und schützt dich vor übereilten Fehlern. Gelegentlich darf es aber auch etwas spontaner sein, damit du Chancen nicht zu lange abwägst."} },
+    highMarkers:["überlegt","gelassen","bedacht"], lowMarkers:["spontan","impulsiv","unmittelbar"] },
+  { code:"ANA", name:"Analytik", oneLiner:"Du durchdringst Dinge gern analytisch und logisch und erfasst sie strukturiert und sachlich.",
+    items:[ {id:"ANA1",text:"Bevor ich entscheide, zerlege ich ein Problem gern in seine einzelnen Bestandteile.",reverse:false},{id:"ANA2",text:"Ich will genau verstehen, warum etwas funktioniert, und gehe Ursachen logisch auf den Grund.",reverse:false},{id:"ANA3",text:"Ich verlasse mich bei Entscheidungen eher auf mein Bauchgefühl als auf eine genaue Analyse.",reverse:true} ],
+    bands:{ low:{text:"Du gehst an die meisten Dinge eher spontan und pragmatisch heran, statt sie lange zu zergliedern. Das macht dich oft schnell und entscheidungsfreudig, auch wenn nicht alle Details geklärt sind. Bei sehr komplexen Sachverhalten kann es dir helfen, dir bewusst etwas mehr Zeit zum Durchdenken zu nehmen."}, mid:{text:"Du kannst gut zwischen analytischem Durchdenken und einer pragmatischen Herangehensweise wechseln. Wenn es darauf ankommt, schaust du genauer hin und strukturierst die Lage, ohne dich in Details zu verlieren. Diese Ausgewogenheit erlaubt dir, sowohl gründlich als auch handlungsfähig zu bleiben."}, high:{text:"Du durchdringst Sachverhalte gern bis ins Detail und gehst dabei strukturiert und logisch vor. Komplexe Zusammenhänge zerlegst du mühelos in nachvollziehbare Teile, was dir fundierte und gut begründete Entscheidungen ermöglicht. Manchmal kann es sich lohnen, neben der genauen Analyse auch dem ersten Eindruck oder dem Tempo einer Situation Raum zu geben."} },
+    highMarkers:["analytisch","strukturiert","logisch"], lowMarkers:["spontan","intuitiv","pragmatisch"] },
+  { code:"LEI", name:"Leidenschaftlichkeit", oneLiner:"Du gehst mit Begeisterung und Hingabe in das, was dir wirklich am Herzen liegt.",
+    items:[ {id:"LEI1",text:"Wenn mich ein Thema packt, gehe ich mit voller Energie darin auf.",reverse:false},{id:"LEI2",text:"In Dinge, die mir wichtig sind, stecke ich mein ganzes Herzblut.",reverse:false},{id:"LEI3",text:"Die meisten Dinge gehe ich eher nüchtern und ohne grosse Begeisterung an.",reverse:true} ],
+    bands:{ low:{text:"Du gehst die Dinge meist ruhig, sachlich und mit kühlem Kopf an. Begeisterung zeigst du selten nach aussen, was dir Gelassenheit und Distanz gibt und dich vor Überhitzung schützt. Manchmal fällt es anderen schwer zu erkennen, was dir wirklich wichtig ist."}, mid:{text:"Du kannst dich für Dinge begeistern, ohne dich darin zu verlieren. Wenn dich etwas anspricht, bringst du Energie und Hingabe mit, behältst aber zugleich einen klaren Blick. Diese Mischung aus Feuer und Bodenständigkeit macht dich verlässlich und trotzdem mitreissend."}, high:{text:"Du brennst für das, was dir wichtig ist, und steckst andere mit deiner Begeisterung an. Deine Hingabe gibt dir Antrieb, Durchhaltevermögen und eine ansteckende Energie. Gelegentlich nimmt dich dein Feuer so ein, dass es dir schwerfällt, abzuschalten oder Mass zu halten."} },
+    highMarkers:["begeistert","hingebungsvoll","feurig"], lowMarkers:["nüchtern","zurückhaltend","gelassen"] },
+  { code:"NAH", name:"Nahbarkeit", oneLiner:"Du lässt Nähe zu, schenkst anderen Vertrauen und gibst ihnen das Gefühl, willkommen zu sein.",
+    items:[ {id:"NAH1",text:"Ich erzähle anderen auch von persönlichen Dingen, die mich beschäftigen.",reverse:false},{id:"NAH2",text:"Wenn jemand mir näherkommen möchte, gehe ich eher auf Abstand.",reverse:true},{id:"NAH3",text:"Neuen Menschen bringe ich schnell Vertrauen entgegen.",reverse:false} ],
+    bands:{ low:{text:"Du hältst zunächst gern etwas Abstand und gibst Persönliches eher zurückhaltend preis. Vertrauen ist für dich etwas, das über Zeit wachsen muss, und genau das schützt dich vor Enttäuschungen. Für andere kann es dadurch länger dauern, dir wirklich nahezukommen."}, mid:{text:"Du lässt Nähe zu, wenn eine Situation sich stimmig anfühlt, bleibst dabei aber bewusst, wem du dich öffnest. So findest du oft eine gute Balance zwischen Offenheit und gesundem Selbstschutz. Menschen, denen du vertraust, teilst du auch Persönliches mit, während du anderen gegenüber erst einmal abwartest."}, high:{text:"Du gehst offen auf andere zu, schenkst schnell Vertrauen und gibst Menschen das Gefühl, willkommen und vertraut zu sein. Diese Wärme lässt Beziehungen oft rasch entstehen und in die Tiefe gehen. Achte dabei darauf, nicht jedem unbesehen zu vertrauen und auch deine eigenen Grenzen im Blick zu behalten."} },
+    highMarkers:["offen","vertrauensvoll","herzlich"], lowMarkers:["zurückhaltend","distanziert","vorsichtig"] }
+] };
+function socialBand(v){ return v<40?'low': v<70?'mid':'high'; }
+function socialBandLabel(v){ return v<40?'gering ausgeprägt': v<70?'mittel ausgeprägt':'stark ausgeprägt'; }
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
+function load(key,def){ try{ const v=JSON.parse(localStorage.getItem(key)); return v==null?def:v; }catch(e){ return def; } }
+function save(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+function initials(p){ return ((p.vorname&&p.vorname[0]||"")+(p.name&&p.name[0]||"")).toUpperCase() || "?"; }
+function uid(){ return "p_"+Math.random().toString(36).slice(2,9)+Math.random().toString(36).slice(2,5); }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); window.scrollTo(0,0); }
+
+/* ---------- build question order (interleaved across traits) ---------- */
+function buildOrder(){
+  const big = DATA.traits.map(t => shuffle(t.items).map(it => ({...it, trait:t.code, kind:'big5'})));
+  const soc = SOCIAL.traits.map(s => shuffle(s.items).map(it => ({ id:it.id, type:'likert', text:it.text, facet:s.name, reverse:it.reverse, options:[], trait:s.code, kind:'social' })));
+  const perTrait = big.concat(soc);
+  const order = [];
+  let added = true;
+  while(added){
+    added = false;
+    for(const lst of perTrait){ if(lst.length){ order.push(lst.shift()); added=true; } }
+  }
+  return order;
+}
+
+/* ---------- static texts ---------- */
+function fillStatic(){
+  const g = DATA.global;
+  $('#app-title').textContent = g.appTitle;
+  document.title = g.appTitle;
+  $('#intro-heading').textContent = g.intro_heading;
+  $('#intro-body').textContent = g.intro_body;
+  $('#intro-how').textContent = g.howItWorks;
+  $('#consent-label').textContent = g.consentLabel;
+  $('#disclaimer').textContent = g.disclaimer;
+  $('#closing-heading').textContent = g.closingHeading;
+  $('#closing-body').textContent = g.closingBody;
+}
+
+/* ---------- profiles ---------- */
+function renderProfiles(){
+  const list = $('#person-list'); list.innerHTML='';
+  const profiles = load(LS_PROFILES, []);
+  if(!profiles.length){ list.appendChild(el('p','muted small','Noch keine Person angelegt. Leg unten eine an.')); }
+  profiles.forEach(p=>{
+    const row = el('button','person');
+    row.innerHTML = `<span class="ava">${initials(p)}</span>
+      <span><span class="nm">${p.vorname} ${p.name}</span><br><span class="sub">tippen zum Starten</span></span>`;
+    const del = el('button','del','✕');
+    del.onclick = (e)=>{ e.stopPropagation(); if(confirm(`${p.vorname} ${p.name} von diesem Gerät entfernen? (bereits in der Cloud gespeicherte Ergebnisse bleiben erhalten)`)){ removeProfile(p.id); } };
+    row.appendChild(del);
+    row.onclick = ()=> startFor(p);
+    list.appendChild(row);
+  });
+}
+function removeProfile(id){
+  const profiles = load(LS_PROFILES, []).filter(p=>p.id!==id);
+  save(LS_PROFILES, profiles);
+  renderProfiles();
+}
+function addProfile(){
+  const vorname = $('#in-vorname').value.trim();
+  const name = $('#in-name').value.trim();
+  if(!vorname){ $('#in-vorname').focus(); return; }
+  const p = { id:uid(), vorname, name };
+  const profiles = load(LS_PROFILES, []); profiles.push(p); save(LS_PROFILES, profiles);
+  $('#in-vorname').value=''; $('#in-name').value='';
+  startFor(p);
+}
+function startFor(p){
+  state.profile = p; state.consentOk=false;
+  $('#consent-row').classList.remove('sel'); $('#btn-start').disabled=true;
+  show('#s-intro');
+}
+
+/* ---------- quiz ---------- */
+function beginQuiz(){
+  state.order = buildOrder();
+  state.idx = 0; state.answers = {};
+  renderQuestion();
+  show('#s-quiz');
+}
+function setProgress(){
+  const total = state.order.length;
+  $('#p-fill').style.width = Math.round((state.idx/total)*100)+'%';
+  $('#q-count').textContent = `Frage ${Math.min(state.idx+1,total)} von ${total}`;
+  $('#streak-n').textContent = Object.keys(state.answers).length;
+}
+function renderInterstitial(onContinue){
+  const g = DATA.global;
+  const round = Math.floor(state.idx/ROUND_SIZE);
+  const totalRounds = Math.ceil(state.order.length/ROUND_SIZE);
+  const msg = g.encouragements[(round-1) % g.encouragements.length] || "Weiter geht's!";
+  const body = $('#q-body');
+  body.innerHTML = '';
+  const box = el('div','inter');
+  box.innerHTML = `<div class="ring"><svg width="42" height="42" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17.8 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg></div>
+    <h2>${msg}</h2><p class="muted">Runde ${round+1} von ${totalRounds}</p>`;
+  const btn = el('button','btn sm','Weiter');
+  btn.onclick = onContinue;
+  box.appendChild(btn);
+  body.appendChild(box);
+}
+function renderQuestion(){
+  setProgress();
+  const item = state.order[state.idx];
+  const body = $('#q-body');
+  body.innerHTML = '';
+  const card = el('div','qcard');
+
+  const isScn = item.type==='scenario';
+  card.appendChild(el('span', 'qtag'+(isScn?' scn':''), isScn ? 'Szenario' : 'Wie sehr trifft das zu?'));
+  card.appendChild(el('div','qtext', item.text));
+
+  if(item.type==='likert'){
+    const labels = el('div','scale-labels'); labels.innerHTML = `<span>gar nicht</span><span>voll</span>`;
+    card.appendChild(labels);
+    const scale = el('div','scale');
+    LIKERT.forEach((lab,i)=>{
+      const v = i+1;
+      const o = el('button','opt');
+      o.innerHTML = `<span class="dot">${CHECK}</span><span>${lab}</span>`;
+      if(state.answers[item.id] && state.answers[item.id].raw===v) o.classList.add('sel');
+      o.onclick = (ev)=> answer(ev, item, v, item.reverse ? (6-v) : v);
+      scale.appendChild(o);
+    });
+    card.appendChild(scale);
+  } else {
+    const scale = el('div','scale'); scale.style.marginTop='4px';
+    shuffle(item.options).forEach(opt=>{
+      const o = el('button','opt');
+      o.innerHTML = `<span class="dot">${CHECK}</span><span>${opt.label}</span>`;
+      const a = state.answers[item.id];
+      if(a && a.raw===opt.value && a.label===opt.label) o.classList.add('sel');
+      o.onclick = (ev)=> answer(ev, item, opt.value, opt.value, opt.label);
+      scale.appendChild(o);
+    });
+    card.appendChild(scale);
+  }
+
+  const foot = el('div','qfoot');
+  const back = el('button','back','‹ zurück'); back.disabled = state.idx===0;
+  back.onclick = ()=> goBack();
+  foot.appendChild(back);
+  card.appendChild(foot);
+
+  body.appendChild(card);
+}
+function answer(ev, item, raw, score, label){
+  state.answers[item.id] = { trait:item.trait, raw, score, label:label||null };
+  const scale = ev.currentTarget.parentNode;
+  scale.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+  ev.currentTarget.classList.add('sel');
+  setProgress();
+  setTimeout(advance, 260);
+}
+function advance(){
+  state.idx++;
+  if(state.idx >= state.order.length){ finish(); return; }
+  if(state.idx % ROUND_SIZE === 0){
+    renderInterstitial(()=>{ renderQuestion(); });
+    setProgress();
+  } else {
+    renderQuestion();
+  }
+}
+function goBack(){
+  if(state.idx===0) return;
+  state.idx--;
+  renderQuestion();
+}
+
+/* ---------- scoring ---------- */
+function computeScores(){
+  const byTrait = {};
+  DATA.traits.forEach(t=> byTrait[t.code] = []);
+  Object.values(state.answers).forEach(a=> { if(byTrait[a.trait]) byTrait[a.trait].push(a.score); });
+  const scores = {}, spreads = [];
+  DATA.traits.forEach(t=>{
+    const arr = byTrait[t.code];
+    const mean = arr.reduce((s,x)=>s+x,0)/arr.length;
+    scores[t.code] = Math.round((mean-1)/4*100);
+    const variance = arr.reduce((s,x)=>s+(x-mean)*(x-mean),0)/arr.length;
+    spreads.push(Math.sqrt(variance));
+  });
+  const avgSpread = spreads.reduce((s,x)=>s+x,0)/spreads.length;
+  const consistent = avgSpread <= 1.35;
+  return { scores, consistent };
+}
+function bandKey(v){ return v<20?'veryLow': v<40?'low': v<60?'mid': v<80?'high':'veryHigh'; }
+function bandLabel(v){ return v<20?'sehr niedrig': v<40?'niedrig': v<60?'mittel': v<80?'hoch':'sehr hoch'; }
+
+function finish(){
+  $('#p-fill').style.width='100%';
+  show('#s-closing');
+}
+
+/* ---------- facets, report, results ---------- */
+function computeFacetScores(){
+  const out = {};
+  DATA.traits.forEach(t=>{
+    const byFacet = {};
+    t.items.forEach(it=>{ const a = state.answers[it.id]; if(a){ (byFacet[it.facet]=byFacet[it.facet]||[]).push(a.score); } });
+    out[t.code] = {};
+    Object.keys(byFacet).forEach(f=>{ const arr=byFacet[f]; const m=arr.reduce((s,x)=>s+x,0)/arr.length; out[t.code][f]=Math.round((m-1)/4*100); });
+  });
+  return out;
+}
+function computeSocialScores(){
+  const out = {};
+  SOCIAL.traits.forEach(s=>{
+    const arr = s.items.map(it=> state.answers[it.id]).filter(Boolean).map(a=>a.score);
+    if(arr.length){ const m=arr.reduce((x,y)=>x+y,0)/arr.length; out[s.code]=Math.round((m-1)/4*100); }
+  });
+  return out;
+}
+function buildAnswerLog(){
+  const log = [];
+  DATA.traits.forEach(t=> t.items.forEach(it=>{
+    const a = state.answers[it.id]; if(!a) return;
+    log.push({ id:it.id, dimension:t.code, dimensionName:t.traitNameDe, facet:it.facet, typ:it.type,
+      frage:it.text, antwort: it.type==='likert' ? LIKERT[a.raw-1] : a.label, wert:a.score });
+  }));
+  SOCIAL.traits.forEach(s=> s.items.forEach(it=>{
+    const a = state.answers[it.id]; if(!a) return;
+    log.push({ id:it.id, dimension:s.code, dimensionName:s.name, facet:s.name, typ:'sozial',
+      frage:it.text, antwort: LIKERT[a.raw-1], wert:a.score });
+  }));
+  return log;
+}
+function buildReport(scores, facetScores, socialScores, consistent){
+  const f = ENRICH.framing;
+  const name = state.profile.vorname || 'du';
+  const sorted = [...DATA.traits].sort((a,b)=> scores[b.code]-scores[a.code]);
+  const top = sorted[0], top2 = sorted[1], low = sorted[sorted.length-1];
+  const mehrere = scores[top2.code] >= 60;
+  const gesamteindruck = `${f.gesamteindruckPre} Am stärksten ausgeprägt ${mehrere?'sind':'ist'} bei dir ${top.traitNameDe}${mehrere?` und ${top2.traitNameDe}`:''}, während ${low.traitNameDe} weniger im Vordergrund steht.`;
+
+  const dimensionen = DATA.traits.map(t=>{
+    const v = scores[t.code]; const band = t.bands[bandKey(v)];
+    const fs = facetScores[t.code] || {};
+    const entries = Object.keys(fs).map(k=>[k,fs[k]]).sort((a,b)=> b[1]-a[1]);
+    let facettenText = '';
+    if(entries.length>=2 && ENRICH.facets[t.code]){
+      const hiName=entries[0][0], hiVal=entries[0][1];
+      const loName=entries[entries.length-1][0], loVal=entries[entries.length-1][1];
+      const hi=ENRICH.facets[t.code][hiName], lo=ENRICH.facets[t.code][loName];
+      if(hi && lo && hiName!==loName){
+        facettenText = `Innerhalb dieser Dimension tritt besonders <b>${hiName}</b> hervor – ${hi.high} (${hiVal}). Weniger im Vordergrund steht <b>${loName}</b> – ${lo.low} (${loVal}).`;
+      }
+    }
+    return { code:t.code, name:t.traitNameDe, score:v, bandLabel:bandLabel(v), titel:band.title,
+      beschreibung:band.text, oneLiner:t.oneLiner, facettenText, marker:(v>=50?t.highMarkers:t.lowMarkers) };
+  });
+
+  const lvl = {}; DATA.traits.forEach(t=> lvl[t.code]=level(scores[t.code]));
+  let matches = COMBO_RULES
+    .filter(r=> lvl[r.a[0]]===r.a[1] && lvl[r.b[0]]===r.b[1] && ENRICH.combos[r.id])
+    .map(r=>({ titel:ENRICH.combos[r.id].titel, text:ENRICH.combos[r.id].text,
+      ex: Math.abs(scores[r.a[0]]-50)+Math.abs(scores[r.b[0]]-50) }));
+  matches.sort((a,b)=> b.ex-a.ex);
+  matches = matches.slice(0,5);
+  const zusammenspiel = matches.length ? matches.map(m=>({titel:m.titel,text:m.text}))
+    : [{ titel:'Ein ausgewogenes Profil', text:f.zusammenspielFallback }];
+
+  const sozial = SOCIAL.traits.map(s=>{
+    const v = socialScores ? socialScores[s.code] : null;
+    if(v==null) return null;
+    const mk = v>=60 ? s.highMarkers : (v<=40 ? s.lowMarkers : []);
+    return { code:s.code, name:s.name, score:v, bandLabel:socialBandLabel(v), oneLiner:s.oneLiner, text:s.bands[socialBand(v)].text, marker:mk };
+  }).filter(Boolean).sort((a,b)=> b.score-a.score);
+
+  return {
+    einleitung: f.einleitung.split('{name}').join(name),
+    gesamteindruck,
+    facettenIntro: f.facettenIntro,
+    staerkenLabel: f.staerkenLabel,
+    dimensionen,
+    zusammenspielIntro: f.zusammenspielIntro,
+    zusammenspiel,
+    sozial,
+    abschluss: f.abschluss.split('{name}').join(name),
+    konsistenzHinweis: consistent ? DATA.global.consistencyOk : DATA.global.consistencyWarn
+  };
+}
+function reportHTML(b){
+  let h = '';
+  h += `<p class="lead">${b.einleitung}</p>`;
+  h += `<div class="synth"><h2>Dein Gesamtbild</h2><p>${b.gesamteindruck}</p></div>`;
+  h += `<h2 class="sec">Deine fünf Dimensionen</h2><p class="sec-sub">${b.facettenIntro}</p>`;
+  b.dimensionen.forEach(d=>{
+    const col = TRAIT_COLOR[d.code];
+    h += `<div class="trait card">
+      <div class="trait-top"><span class="trait-name">${d.name}</span><span class="trait-band" style="color:${col}">${d.score} · ${d.bandLabel}</span></div>
+      <div class="track"><div class="fill" data-w="${d.score}" style="background:${col}"></div></div>
+      <p class="dim-one">${d.oneLiner}</p>
+      <div class="trait-title">${d.titel}</div>
+      <p class="trait-text">${d.beschreibung}</p>
+      ${d.facettenText?`<div class="facetbox">${d.facettenText}</div>`:''}
+      <div class="dim-one" style="margin:12px 0 5px; font-style:normal; font-weight:700; color:var(--purple-dark);">${b.staerkenLabel}</div>
+      <div class="markers">${d.marker.map(m=>`<span class="mk">${m}</span>`).join('')}</div>
+    </div>`;
+  });
+  h += `<h2 class="sec">Wie deine Eigenschaften zusammenwirken</h2><p class="sec-sub">${b.zusammenspielIntro}</p>`;
+  b.zusammenspiel.forEach(z=>{ h += `<div class="combo card"><div class="combo-title">${z.titel}</div><p>${z.text}</p></div>`; });
+  if(b.sozial && b.sozial.length){
+    h += `<h2 class="sec">Soziale & persönliche Stärken</h2><p class="sec-sub">Wie ausgeprägt einzelne soziale und persönliche Eigenschaften bei dir sind – sortiert von stark zu weniger stark.</p>`;
+    b.sozial.forEach(s=>{
+      h += `<div class="trait card">
+        <div class="trait-top"><span class="trait-name">${s.name}</span><span class="trait-band" style="color:var(--purple-dark)">${s.score} · ${s.bandLabel}</span></div>
+        <div class="track"><div class="fill" data-w="${s.score}" style="background:linear-gradient(90deg,var(--purple-mid),var(--purple))"></div></div>
+        <p class="dim-one">${s.oneLiner}</p>
+        <p class="trait-text">${s.text}</p>
+        ${(s.marker&&s.marker.length)?`<div class="markers">${s.marker.map(m=>`<span class="mk">${m}</span>`).join('')}</div>`:''}
+      </div>`;
+    });
+  }
+  h += `<div class="closing card"><h2>Zum Schluss</h2><p>${b.abschluss}</p><p class="consist-inline">${b.konsistenzHinweis}</p></div>`;
+  return h;
+}
+function buildResult(){
+  const { scores, consistent } = computeScores();
+  const facetScores = computeFacetScores();
+  const socialScores = computeSocialScores();
+  const report = buildReport(scores, facetScores, socialScores, consistent);
+  const now = new Date();
+  const result = {
+    id: uid(), profileId: state.profile.id,
+    vorname: state.profile.vorname, name: state.profile.name,
+    date: now.toISOString(),
+    scores,
+    bands: Object.fromEntries(DATA.traits.map(t=>[t.code, bandKey(scores[t.code])])),
+    facetScores,
+    socialScores,
+    antworten: buildAnswerLog(),
+    konsistenz: consistent ? 1 : 0,
+    bericht: report,
+    saved: false
+  };
+  const all = load(LS_RESULTS, []); all.push(result); save(LS_RESULTS, all);
+  state.lastResult = result;
+  return { result, consistent };
+}
+function renderResult(){
+  const { result } = buildResult();
+  $('#res-ava').textContent = initials(state.profile);
+  $('#res-name').textContent = `${state.profile.vorname} ${state.profile.name}`.trim();
+  $('#res-date').textContent = new Date(result.date).toLocaleDateString('de-CH',{day:'2-digit',month:'long',year:'numeric'});
+  $('#report').innerHTML = reportHTML(result.bericht);
+  document.querySelectorAll('#report .fill').forEach(fl=>{ const w=fl.getAttribute('data-w'); requestAnimationFrame(()=> setTimeout(()=>{ fl.style.width=w+'%'; }, 90)); });
+  show('#s-result');
+  autoSaveCurrent();
+}
+
+/* ---------- supabase (vollautomatisch, mit Nachhol-Mechanismus) ---------- */
+function cloudConfigured(){ return SUPABASE_URL.indexOf('DEIN-')<0 && SUPABASE_KEY.indexOf('DEIN-')<0; }
+function markSaved(id){
+  const all = load(LS_RESULTS, []).map(x=> x.id===id ? Object.assign({},x,{saved:true}) : x); save(LS_RESULTS, all);
+  if(state.lastResult && state.lastResult.id===id) state.lastResult.saved = true;
+}
+async function pushToCloud(r){
+  if(!cloudConfigured()) return { ok:false, skip:true };
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`,{
+      method:'POST',
+      headers:{ 'apikey':SUPABASE_KEY, 'Authorization':`Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+      body: JSON.stringify({
+        profil_id: r.profileId, vorname: r.vorname, name: r.name,
+        erstellt_am: r.date, scores: r.scores, bands: r.bands,
+        antworten: r.antworten, konsistenz: r.konsistenz,
+        modell: 'Big Five + soziale Eigenschaften (Selbsteinschätzung)', bericht: r.bericht
+      })
+    });
+    if(!res.ok) return { ok:false, error:'HTTP '+res.status+' – '+(await res.text()) };
+    markSaved(r.id);
+    return { ok:true };
+  }catch(err){ return { ok:false, error:err.message }; }
+}
+async function autoSaveCurrent(){
+  const r = state.lastResult; const st = $('#save-status');
+  if(!r) return;
+  if(r.saved){ st.className='status ok'; st.textContent='✓ Gespeichert.'; return; }
+  if(!cloudConfigured()){ st.className='status'; st.textContent='Auf diesem Gerät gespeichert.'; return; }
+  st.className='status'; st.textContent='Wird gespeichert …';
+  let res;
+  for(let i=0;i<3;i++){ res = await pushToCloud(r); if(res && res.ok) break; await new Promise(x=>setTimeout(x,1200)); }
+  if(res && res.ok){ st.className='status ok'; st.textContent='✓ Gespeichert – dein Ergebnis ist gesichert.'; }
+  else if(location.protocol==='file:'){ st.className='status err'; st.textContent='Noch nicht in der Cloud: Bitte die Seite über http://localhost öffnen (nicht als Datei) – sonst blockiert der Browser Supabase.'; }
+  else { st.className='status'; st.textContent='Auf diesem Gerät gesichert. Die Übertragung wird beim nächsten Öffnen automatisch nachgeholt.'; }
+}
+async function flushPending(){
+  if(!cloudConfigured()) return;
+  const pend = load(LS_RESULTS, []).filter(x=> !x.saved);
+  for(const r of pend){ await pushToCloud(r); }
+}
+
+/* ---------- PDF-Export ---------- */
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('PDF-Bibliothek konnte nicht geladen werden (Internet nötig).')); document.head.appendChild(s); }); }
+async function ensureJsPdf(){ if(window.jspdf && window.jspdf.jsPDF) return; await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function pdfFilename(r){
+  const d=new Date(r.date);
+  const stamp=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())} ${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
+  const nm=`${r.name||''} ${r.vorname||''}`.trim();
+  return (stamp+' '+nm).replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim()+'.pdf';
+}
+const _pdfClean = s => String(s||'').replace(/<[^>]+>/g,'').replace(/[–—]/g,'-').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/…/g,'...').replace(/ /g,' ');
+function buildPdfDoc(doc, r){
+  const b=r.bericht; const M=16, PW=210, PH=297, CW=PW-2*M;
+  const COL={O:[55,138,221],C:[29,158,117],E:[239,159,39],A:[212,83,126],N:[127,119,221]};
+  const PURP=[91,79,196], INK=[38,33,92], GRAY=[120,114,160], SOFT=[74,70,112];
+  let y=M;
+  function f(sz,st){ doc.setFont('helvetica',st||'normal'); doc.setFontSize(sz); }
+  function ensure(h){ if(y+h > PH-14){ doc.addPage(); y=M; } }
+  function text(str,o){ o=o||{}; const sz=o.size||10.5, lh=sz*0.3528*1.34; f(sz,o.style); const c=o.color||INK; doc.setTextColor(c[0],c[1],c[2]); const lines=doc.splitTextToSize(_pdfClean(str), CW); for(const ln of lines){ ensure(lh); doc.text(ln,M,y+lh*0.78); y+=lh; } y+=(o.gap!=null?o.gap:1.2); }
+  function section(t){ y+=3; ensure(11); f(14.5,'bold'); doc.setTextColor(PURP[0],PURP[1],PURP[2]); doc.text(_pdfClean(t),M,y+6); y+=10; }
+  function head(name,score,band,color){ ensure(9); f(12.5,'bold'); doc.setTextColor(INK[0],INK[1],INK[2]); doc.text(_pdfClean(name),M,y+5.5); f(11,'bold'); doc.setTextColor(color[0],color[1],color[2]); doc.text(score+' · '+_pdfClean(band), PW-M, y+5.5, {align:'right'}); y+=8.5; }
+  function bar(score,color){ ensure(6); const bh=3.2; doc.setFillColor(236,235,246); doc.roundedRect(M,y,CW,bh,1.4,1.4,'F'); doc.setFillColor(color[0],color[1],color[2]); doc.roundedRect(M,y,Math.max(2,CW*score/100),bh,1.4,1.4,'F'); y+=bh+3; }
+  doc.setFillColor(PURP[0],PURP[1],PURP[2]); doc.rect(0,0,PW,26,'F');
+  f(18,'bold'); doc.setTextColor(255,255,255); doc.text('Innenblick · Persönlichkeitsbericht', M, 12);
+  const d=new Date(r.date); const ds=`${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()} ${pad2(d.getHours())}.${pad2(d.getMinutes())}`;
+  f(11,'normal'); doc.setTextColor(238,237,254); doc.text(_pdfClean(`${r.vorname||''} ${r.name||''}`).trim()+'   ·   '+ds, M, 20);
+  y=34;
+  if(b.einleitung) text(b.einleitung,{size:11,color:SOFT,gap:2});
+  section('Dein Gesamtbild'); text(b.gesamteindruck,{gap:2});
+  section('Die fünf Dimensionen');
+  (b.dimensionen||[]).forEach(dm=>{ const c=COL[dm.code]||PURP; head(dm.name,dm.score,dm.bandLabel,c); bar(dm.score,c); if(dm.oneLiner) text(dm.oneLiner,{size:9,style:'italic',color:GRAY,gap:1}); if(dm.titel) text(dm.titel,{size:11,style:'bold',gap:0.6}); if(dm.beschreibung) text(dm.beschreibung,{}); if(dm.facettenText) text(dm.facettenText,{size:9.5,color:SOFT}); if(dm.marker&&dm.marker.length) text('Stichworte: '+dm.marker.join(' · '),{size:9,color:GRAY,gap:3}); });
+  if(b.zusammenspiel&&b.zusammenspiel.length){ section('Wie deine Eigenschaften zusammenwirken'); b.zusammenspiel.forEach(z=>{ text(z.titel,{size:11,style:'bold',color:PURP,gap:0.6}); text(z.text,{gap:3}); }); }
+  if(b.sozial&&b.sozial.length){ section('Soziale & persönliche Stärken'); b.sozial.forEach(s=>{ head(s.name,s.score,s.bandLabel,PURP); bar(s.score,PURP); if(s.text) text(s.text,{gap:3}); }); }
+  section('Zum Schluss'); if(b.abschluss) text(b.abschluss,{}); if(b.konsistenzHinweis) text(b.konsistenzHinweis,{size:9,color:GRAY});
+  const pages=doc.getNumberOfPages();
+  for(let i=1;i<=pages;i++){ doc.setPage(i); f(8,'normal'); doc.setTextColor(150,148,165); doc.text('Innenblick – Selbsteinschätzung, keine fachliche Diagnose.', M, PH-8); doc.text(i+' / '+pages, PW-M, PH-8, {align:'right'}); }
+}
+async function savePdf(){
+  const r=state.lastResult; if(!r) return;
+  const btn=$('#btn-pdf'); const old=btn.textContent; btn.disabled=true; btn.textContent='Erstelle PDF …';
+  try{ await ensureJsPdf(); const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}); buildPdfDoc(doc,r); doc.save(pdfFilename(r)); }
+  catch(e){ alert('PDF konnte nicht erstellt werden: '+e.message); }
+  finally{ btn.disabled=false; btn.textContent=old; }
+}
+
+/* ---------- history ---------- */
+function renderHistory(){
+  const list = $('#hist-list'); list.innerHTML='';
+  const rows = load(LS_RESULTS, []).filter(r=>r.profileId===state.profile.id).reverse();
+  $('#hist-title').textContent = `Verlauf · ${state.profile.vorname}`;
+  if(!rows.length){ list.appendChild(el('p','muted','Noch keine gespeicherten Ergebnisse.')); return; }
+  rows.forEach(r=>{
+    const d = new Date(r.date).toLocaleDateString('de-CH',{day:'2-digit',month:'short',year:'numeric'});
+    const bars = DATA.traits.map(t=>`<span style="width:${Math.max(4,Math.round(r.scores[t.code]/3))}px; background:${TRAIT_COLOR[t.code]}"></span>`).join('');
+    const row = el('div','hist-item');
+    row.innerHTML = `<span class="hist-dot"></span>
+      <div><div style="font-weight:600">${d} ${r.saved?'· ☁':''}</div>
+      <div class="hist-mini">${bars}</div></div>`;
+    list.appendChild(row);
+  });
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+$('#btn-add-person').onclick = addProfile;
+$('#in-name').addEventListener('keydown', e=>{ if(e.key==='Enter') addProfile(); });
+$('#intro-back').onclick = ()=> show('#s-profile');
+$('#consent-row').onclick = ()=>{
+  state.consentOk = !state.consentOk;
+  $('#consent-row').classList.toggle('sel', state.consentOk);
+  $('#btn-start').disabled = !state.consentOk;
+};
+$('#btn-start').onclick = ()=>{ if(state.consentOk) beginQuiz(); };
+$('#btn-show-result').onclick = renderResult;
+$('#btn-pdf').onclick = savePdf;
+$('#btn-restart').onclick = ()=>{ show('#s-profile'); renderProfiles(); };
+$('#res-home').onclick = ()=>{ show('#s-profile'); renderProfiles(); };
+$('#res-history').onclick = ()=>{ renderHistory(); show('#s-history'); };
+$('#hist-back').onclick = ()=> show('#s-result');
+
+/* ---------- init ---------- */
+fillStatic();
+renderProfiles();
+flushPending();
+</script>
+</body>
+</html>
